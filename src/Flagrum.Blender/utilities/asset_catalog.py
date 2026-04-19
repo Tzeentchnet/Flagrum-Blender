@@ -48,6 +48,7 @@ _CATS_FILENAME = "blender_assets.cats.txt"
 # Catalog UUID derivation
 # ---------------------------------------------------------------------------
 
+
 def catalog_uuid(catalog_path: str) -> str:
     """Return a stable canonical UUID string for ``catalog_path``."""
     return str(uuid.uuid5(_CATALOG_NAMESPACE, catalog_path))
@@ -66,6 +67,7 @@ def materials_catalog_path(model_name: str) -> str:
 # ---------------------------------------------------------------------------
 # Asset marking
 # ---------------------------------------------------------------------------
+
 
 def _apply_catalog(asset_owner, catalog_path: str, simple_name: str) -> None:
     """Mark ``asset_owner`` as an asset and assign catalog metadata."""
@@ -89,6 +91,7 @@ def mark_material_asset(material: bpy.types.Material, model_name: str) -> None:
 # ---------------------------------------------------------------------------
 # blender_assets.cats.txt management
 # ---------------------------------------------------------------------------
+
 
 def _existing_uuids(cats_path: str) -> set[str]:
     """Return the set of catalog UUIDs already present in ``cats_path``."""

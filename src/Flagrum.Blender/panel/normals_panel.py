@@ -15,9 +15,11 @@ class UseCustomNormalsOperator(Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.view_layer.objects.active is not None \
-               and context.view_layer.objects.active.type == 'MESH' \
-               and not context.view_layer.objects.active.data.has_custom_normals
+        return (
+            context.view_layer.objects.active is not None
+            and context.view_layer.objects.active.type == "MESH"
+            and not context.view_layer.objects.active.data.has_custom_normals
+        )
 
     def execute(self, context):
         for mesh_object in context.view_layer.objects.selected:
@@ -41,7 +43,7 @@ class UseCustomNormalsOperator(Operator):
 
             mesh.update(calc_edges=True)
 
-            clnors = array('f', [0.0] * (len(mesh.loops) * 3))
+            clnors = array("f", [0.0] * (len(mesh.loops) * 3))
             mesh.loops.foreach_get("normal", clnors)
             mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
 
@@ -51,7 +53,7 @@ class UseCustomNormalsOperator(Operator):
 
             apply_custom_split_normals(mesh, final_normals)
 
-            return {'FINISHED'}
+            return {"FINISHED"}
 
 
 class SplitEdgesOperator(Operator):
@@ -63,18 +65,18 @@ class SplitEdgesOperator(Operator):
     def poll(cls, context):
         selected_meshes = []
         for obj in context.view_layer.objects.selected:
-            if obj.type == 'MESH':
+            if obj.type == "MESH":
                 selected_meshes.append(obj)
         return len(selected_meshes) > 0
 
     def execute(self, context):
         for obj in context.view_layer.objects.selected:
-            if obj.type == 'MESH':
+            if obj.type == "MESH":
                 # Make sure all verts are selected otherwise some of the bmesh operations shit themselves
                 for vertex in obj.data.vertices:
                     vertex.select = True
 
-                set_object_mode(obj, 'EDIT')
+                set_object_mode(obj, "EDIT")
                 bmesh_copy = bmesh.from_edit_mesh(obj.data)
 
                 # Clear seams as we need to use them for splitting
@@ -96,17 +98,17 @@ class SplitEdgesOperator(Operator):
 
                 # Apply the changes to the mesh
                 bmesh.update_edit_mesh(obj.data)
-                set_object_mode(obj, 'OBJECT')
+                set_object_mode(obj, "OBJECT")
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class NormalsPanel(Panel):
     bl_idname = "VIEW_3D_PT_flagrum_normals"
     bl_label = "Custom Normals"
     bl_category = "Flagrum"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
 
     def draw(self, context):
         layout = self.layout

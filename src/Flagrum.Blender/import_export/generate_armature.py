@@ -57,7 +57,7 @@ def distance(point, origin, line):
     pointPrime = point - origin
     a = pointPrime.project(line).magnitude
     c = pointPrime.magnitude
-    return c ** 2 - a ** 2
+    return c**2 - a**2
 
 
 def minimizeDistance(origin, transform, points):

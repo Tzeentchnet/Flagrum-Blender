@@ -33,14 +33,15 @@ Goal: ship `2.0.0` as a Blender Extension.
 - [x] `py -3.13 -m ruff check src\Flagrum.Blender` — **all checks passed** (2026-04-18).
   - 49 issues auto-fixed via `--fix --unsafe-fixes` (imports, UP015, W292, UP045, W293).
   - 15 manual fixes: UP031 `%`-format → f-strings in `generate_armature.py`; B007 `for i in range(...)` → `for _ in range(...)` across `gmdl.py`, `gmtl.py`, `read_armature_data.py`.
-- [ ] `ruff format src/Flagrum.Blender` — **deferred**: would reformat 48 files (large diff churn unrelated to behaviour). Run before tagging if desired.
-- [x] `py -3.13 -m compileall -q src\Flagrum.Blender` — clean (2026-04-18).
+- [x] `py -3.13 -m ruff format src\Flagrum.Blender` — **48 files reformatted, 1 left unchanged** (2026-04-19); follow-up `ruff format --check` reports `49 files already formatted` and `ruff check` still passes. Landed as a standalone style-only commit so behaviour blame is preserved.
+- [x] `py -3.13 -m compileall -q src\Flagrum.Blender` — clean (2026-04-19, post-format).
 
 ### 5c. Documentation
 - [x] Top-level `README.md` rewritten for the fork (Blender 5+ install, feature matrix, known limitations, link to upstream `Kizari/Flagrum`).
 - [x] `src/Flagrum.Blender/README.md` rewritten as addon-local layout/conventions guide.
-- [ ] Add a short `CONTRIBUTING.md` if we expect outside PRs (optional — skipped for now).
-- [ ] Roll changelog `[Unreleased]` → `[2.0.0] - YYYY-MM-DD` once smoke matrix passes.
+- [x] Top-level `README.md` license section expanded with SPDX id, upstream attribution (Kizari, 2021–2025), and fork attribution (Kenneth Peters / Tzeentchnet, 2026); fork URLs updated from `Kizari/Flagrum-Blender` to `Tzeentchnet/Flagrum-Blender`.
+- [ ] ~~Add a short `CONTRIBUTING.md`~~ — **won't-do for 2.0.x**: not expecting outside PRs yet. Revisit if PR volume warrants it.
+- [x] Rolled `[2.0.0] - 2026-04-18` in CHANGELOG (2026-04-18). A follow-up `[2.0.1]` entry covers post-release README/license/format work.
 
 ### 5d. Manual smoke matrix
 Execute on Blender 5.0 (and 5.1 if available) with `--factory-startup`:
@@ -62,8 +63,10 @@ For each row capture: import time (Timer output), Blender console errors, visual
 - [x] `blender_manifest.toml` already at `version = "2.0.0"`, `blender_version_min = "5.0.0"`. Tagline + permissions strings shortened to satisfy the 64-char manifest limit; added `.idea/` to `paths_exclude_pattern`.
 - [x] Built `flagrum-2.0.0.zip` via `blender --command extension build --source-dir src/Flagrum.Blender --output-dir dist` on Blender 5.1 (2026-04-18, 65 entries, ~370 KB).
 - [x] Verified `__pycache__`, `*.pyc`, `venv/`, `.git*`, `.idea/`, `.vscode/` correctly excluded from the produced zip.
-- [ ] Smoke-install the produced zip via Extensions UI on a clean Blender profile.
-- [ ] Tag `v2.0.0`, attach zip to GitHub release, update CHANGELOG date.
+- [x] Smoke-installed the produced zip via Extensions UI on a clean Blender profile (2026-04-19) — installed cleanly.
+- [x] Tagged & released on GitHub: tag **`flagrum`**, commit `64fa577`, title "Flagrum Blender Addon 2.0", 3 assets attached, published 2026-04-19. <https://github.com/Tzeentchnet/Flagrum-Blender/releases/tag/flagrum>
+- [ ] **Manual on github.com**: edit the release and uncheck "Set as a pre-release" so it becomes Latest, otherwise the README's `releases/latest` link will 404 (GitHub's `/releases/latest` redirect skips pre-releases).
+- [ ] **Tag-scheme decision recorded**: future releases use semver tags (`v2.0.1`, `v2.1.0`, …); the existing `flagrum` tag stays as a one-off.
 
 ## Phase 6+ — Post-2.0 candidates (not scheduled)
 

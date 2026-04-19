@@ -1,4 +1,4 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
 
 
 @dataclass
@@ -15,7 +15,7 @@ class GmdlNode:
             [reader.read(), reader.read(), reader.read()],
             [reader.read(), reader.read(), reader.read()],
             [reader.read(), reader.read(), reader.read()],
-            [reader.read(), reader.read(), reader.read()]
+            [reader.read(), reader.read(), reader.read()],
         ]
 
         if is_first:

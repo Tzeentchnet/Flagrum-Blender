@@ -49,8 +49,7 @@ def _read_armature_data(amdl_file):
 
     amdl_file.seek(156, 1)
 
-    names_start = struct.unpack("<L", amdl_file.read(4))[
-                      0] + relative_offsets[0]
+    names_start = struct.unpack("<L", amdl_file.read(4))[0] + relative_offsets[0]
 
     # Skip the next 4 bytes (not sure what these are)
     struct.unpack("<L", amdl_file.read(4))[0]
@@ -133,8 +132,7 @@ def _read_armature_data(amdl_file):
     amdl_file.seek(transforms_offset, 0)
 
     for i in range(parent_count):
-        temporary_matrix = numpy.fromfile(
-            amdl_file, dtype='<f', count=16).reshape((4, 4))
+        temporary_matrix = numpy.fromfile(amdl_file, dtype="<f", count=16).reshape((4, 4))
 
         if i == 0 and not is_root_bone_trans:
             amdl_file.seek(-64, 1)
@@ -184,7 +182,7 @@ def _read_string(file, number_of_bytes=200):
         ascii_byte = file.read(1)
         string_value += ascii_byte
         byte_count += 1
-    return string_value[:-1].decode('ascii', errors='ignore')
+    return string_value[:-1].decode("ascii", errors="ignore")
 
 
 def _align(ptr, alignment):

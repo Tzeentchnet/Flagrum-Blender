@@ -36,11 +36,7 @@ class GmdlImporter:
     def __init__(self, context):
         self.gpubins = {}
         self.context = context
-        self.correction_matrix = Matrix([
-            [1, 0, 0],
-            [0, 0, -1],
-            [0, 1, 0]
-        ])
+        self.correction_matrix = Matrix([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
         # NumPy mirror of ``correction_matrix`` for vectorised row-vector
         # multiplication (``positions @ correction_matrix_np_T``).  Stored as
         # ``float32`` so it does not silently widen vertex/normal arrays.
@@ -61,7 +57,7 @@ class GmdlImporter:
             ElementFormat.XYZW8_UintN: "BBBB",
             ElementFormat.XYZW8_SintN: "bbbb",
             ElementFormat.XYZW16_Uint: "HHHH",
-            ElementFormat.XYZW32_Uint: "IIII"
+            ElementFormat.XYZW32_Uint: "IIII",
         }
 
     def run(self):
@@ -161,9 +157,9 @@ class GmdlImporter:
         else:
             data_type = "<I"
 
-        face_indices = np.frombuffer(buffer, dtype=data_type, offset=mesh_data.face_index_offset,
-                                     count=mesh_data.face_index_count) \
-            .reshape((int(mesh_data.face_index_count / 3), 3))
+        face_indices = np.frombuffer(
+            buffer, dtype=data_type, offset=mesh_data.face_index_offset, count=mesh_data.face_index_count
+        ).reshape((int(mesh_data.face_index_count / 3), 3))
 
         self.timer.print("Reading face indices")
 
@@ -300,9 +296,7 @@ class GmdlImporter:
 
         polygon_count = len(mesh.polygons)
         for parts_group in mesh_data.parts:
-            parts_layer = mesh.attributes.new(name=model_parts[parts_group.parts_id],
-                                              type='BOOLEAN',
-                                              domain='FACE')
+            parts_layer = mesh.attributes.new(name=model_parts[parts_group.parts_id], type="BOOLEAN", domain="FACE")
 
             start_index = int(parts_group.start_index / 3)
             index_count = int(parts_group.index_count / 3)
@@ -341,8 +335,8 @@ class GmdlImporter:
                 if bw_key not in semantics:
                     continue
                 bi_key = "BLENDINDICES" + str(slot)
-                blend_weight = semantics[bw_key]      # (N, 4) float
-                blend_indices = semantics[bi_key]     # (N, 4) int
+                blend_weight = semantics[bw_key]  # (N, 4) float
+                blend_indices = semantics[bi_key]  # (N, 4) int
 
                 # Convert to integer 0..255 bucket keys for stable grouping.
                 bw_int = np.rint(blend_weight * 255.0).astype(np.uint16)
@@ -350,9 +344,7 @@ class GmdlImporter:
                 if not np.any(nz):
                     continue
 
-                v_grid = np.broadcast_to(
-                    np.arange(n_verts, dtype=np.int64)[:, None], bw_int.shape
-                )
+                v_grid = np.broadcast_to(np.arange(n_verts, dtype=np.int64)[:, None], bw_int.shape)
                 slot_v.append(v_grid[nz])
                 slot_b.append(blend_indices[nz].astype(np.int64, copy=False))
                 slot_w.append(bw_int[nz].astype(np.int64, copy=False))
@@ -360,10 +352,7 @@ class GmdlImporter:
             # Pre-create a vertex group for every bone in the table so the
             # cleanup panel and any downstream tooling that scans for
             # missing groups continues to see the full bone roster.
-            vertex_groups = {
-                key: mesh_object.vertex_groups.new(name=name)
-                for key, name in self.bone_table.items()
-            }
+            vertex_groups = {key: mesh_object.vertex_groups.new(name=name) for key, name in self.bone_table.items()}
 
             if slot_v:
                 v_arr = np.concatenate(slot_v)
@@ -388,12 +377,13 @@ class GmdlImporter:
                     verts_s = verts[order]
 
                     # Run start indices: where (bone, weight) changes.
-                    run_starts = np.concatenate((
-                        [0],
-                        np.flatnonzero((bones_s[1:] != bones_s[:-1])
-                                       | (wts_s[1:] != wts_s[:-1])) + 1,
-                        [bones_s.size],
-                    ))
+                    run_starts = np.concatenate(
+                        (
+                            [0],
+                            np.flatnonzero((bones_s[1:] != bones_s[:-1]) | (wts_s[1:] != wts_s[:-1])) + 1,
+                            [bones_s.size],
+                        )
+                    )
 
                     inv_255 = 1.0 / 255.0
                     for r in range(run_starts.size - 1):
@@ -404,14 +394,13 @@ class GmdlImporter:
                         vg = vertex_groups.get(bone_id)
                         if vg is None:
                             continue
-                        vg.add(verts_s[a:b].tolist(), weight, 'REPLACE')
+                        vg.add(verts_s[a:b].tolist(), weight, "REPLACE")
 
         self.timer.print("Generating weight data")
 
         # Link the mesh to the armature
         if len(self.bone_table) > 0:
-            mod = mesh_object.modifiers.new(
-                type="ARMATURE", name=context.collection.name)
+            mod = mesh_object.modifiers.new(type="ARMATURE", name=context.collection.name)
             mod.use_vertex_groups = True
 
             armature = bpy.data.objects[context.collection.name]

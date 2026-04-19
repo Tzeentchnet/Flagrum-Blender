@@ -27,17 +27,17 @@ from .gmdl.gmdlvertexelementformat import ElementFormat
 # normalised ``float32`` output; ``signed_norm`` uses ``1 / 0x7F`` style
 # division and is applied to signed integer normalised formats.
 _FORMAT_DECODERS: dict[ElementFormat, tuple[np.dtype, int, str]] = {
-    ElementFormat.XYZ32_Float:   (np.dtype("<f4"), 3, "float"),
-    ElementFormat.XY32_Float:    (np.dtype("<f4"), 2, "float"),
-    ElementFormat.XY16_SintN:    (np.dtype("<i2"), 2, "signed_norm"),
-    ElementFormat.XY16_UintN:    (np.dtype("<u2"), 2, "unsigned_norm"),
-    ElementFormat.XY16_Float:    (np.dtype("<f2"), 2, "float"),
-    ElementFormat.XYZW8_UintN:   (np.dtype("<u1"), 4, "unsigned_norm"),
-    ElementFormat.XYZW8_Uint:    (np.dtype("<u1"), 4, "uint"),
-    ElementFormat.XYZW8_SintN:   (np.dtype("<i1"), 4, "signed_norm"),
-    ElementFormat.XYZW8_Sint:    (np.dtype("<i1"), 4, "int"),
-    ElementFormat.XYZW16_Uint:   (np.dtype("<u2"), 4, "uint"),
-    ElementFormat.XYZW32_Uint:   (np.dtype("<u4"), 4, "uint"),
+    ElementFormat.XYZ32_Float: (np.dtype("<f4"), 3, "float"),
+    ElementFormat.XY32_Float: (np.dtype("<f4"), 2, "float"),
+    ElementFormat.XY16_SintN: (np.dtype("<i2"), 2, "signed_norm"),
+    ElementFormat.XY16_UintN: (np.dtype("<u2"), 2, "unsigned_norm"),
+    ElementFormat.XY16_Float: (np.dtype("<f2"), 2, "float"),
+    ElementFormat.XYZW8_UintN: (np.dtype("<u1"), 4, "unsigned_norm"),
+    ElementFormat.XYZW8_Uint: (np.dtype("<u1"), 4, "uint"),
+    ElementFormat.XYZW8_SintN: (np.dtype("<i1"), 4, "signed_norm"),
+    ElementFormat.XYZW8_Sint: (np.dtype("<i1"), 4, "int"),
+    ElementFormat.XYZW16_Uint: (np.dtype("<u2"), 4, "uint"),
+    ElementFormat.XYZW32_Uint: (np.dtype("<u4"), 4, "uint"),
 }
 
 
@@ -70,10 +70,7 @@ def _build_struct_dtype(stream) -> tuple[np.dtype, list]:
     for index, element in enumerate(stream.elements):
         decoder = _FORMAT_DECODERS.get(element.format)
         if decoder is None:
-            print(
-                f"[ERROR] Unsupported element format {element.format!s} on "
-                f"{element.semantic}"
-            )
+            print(f"[ERROR] Unsupported element format {element.format!s} on {element.semantic}")
             continue
         raw_dtype, count, _ = decoder
         # Field names must be unique even if two semantics collide; index
@@ -84,12 +81,14 @@ def _build_struct_dtype(stream) -> tuple[np.dtype, list]:
         offsets.append(element.offset)
         decodable.append((field_name, element))
 
-    struct_dtype = np.dtype({
-        "names": names,
-        "formats": formats,
-        "offsets": offsets,
-        "itemsize": stream.stride,
-    })
+    struct_dtype = np.dtype(
+        {
+            "names": names,
+            "formats": formats,
+            "offsets": offsets,
+            "itemsize": stream.stride,
+        }
+    )
     return struct_dtype, decodable
 
 

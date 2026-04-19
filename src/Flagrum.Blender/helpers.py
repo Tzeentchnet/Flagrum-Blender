@@ -1,4 +1,4 @@
-﻿import textwrap
+import textwrap
 
 from bpy.types import UILayout
 
@@ -8,6 +8,6 @@ def draw_lines(layout: UILayout, text: str):
     lines = wrap.wrap(text=text)
     for line in lines:
         row = layout.row(align=True)
-        row.alignment = 'EXPAND'
+        row.alignment = "EXPAND"
         row.scale_y = 0.6
         row.label(text=line)

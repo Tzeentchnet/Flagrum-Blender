@@ -23,25 +23,19 @@ from .read_armature_data import import_armature_data
 
 class ImportOperator(Operator, ImportHelper):
     """Imports data from a Luminous Engine model"""
+
     bl_idname = "flagrum.gfxbin_import"
     bl_label = "Import FFXV Model (.gfxbin)"
     filename_ext = ".gfxbin"
 
-    filter_glob: StringProperty(
-        default="*.gfxbin",
-        options={'HIDDEN'}
-    )
+    filter_glob: StringProperty(default="*.gfxbin", options={"HIDDEN"})
 
     import_lods: BoolProperty(
-        name="Import LODs",
-        description="If checked, Flagrum will import all LOD meshes with this model.",
-        default=False
+        name="Import LODs", description="If checked, Flagrum will import all LOD meshes with this model.", default=False
     )
 
     import_vems: BoolProperty(
-        name="Import VEMs",
-        description="If checked, Flagrum will import all VEM meshes with this model.",
-        default=False
+        name="Import VEMs", description="If checked, Flagrum will import all VEM meshes with this model.", default=False
     )
 
     def draw(self, context):
@@ -59,24 +53,22 @@ class ImportOperator(Operator, ImportHelper):
 
         importer = GmdlImporter(import_context)
         importer.run()
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class ExportOperator(Operator, ExportHelper):
     """Exports a mod data package for use with Flagrum"""
+
     bl_idname = "flagrum.gfxbin_export"
     bl_label = "Export to Flagrum"
     filename_ext = ".fmd"
 
-    filter_glob: StringProperty(
-        default="*.fmd",
-        options={'HIDDEN'}
-    )
+    filter_glob: StringProperty(default="*.fmd", options={"HIDDEN"})
 
     preserve_normals: BoolProperty(
         name="Autocorrect Seam Normals",
         description="Automatically corrects seam normals after edge-splitting for Luminous. May cause issues for double-sided meshes.",
-        default=True
+        default=True,
     )
 
     def draw(self, context):
@@ -88,19 +80,17 @@ class ExportOperator(Operator, ExportHelper):
         data = pack_mesh(self.preserve_normals)
         Interop.export_mesh(self.filepath, data)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class ImportEnvironmentOperator(Operator, ImportHelper):
     """Imports data from a Flagrum Environment Pack"""
+
     bl_idname = "flagrum.environment_import"
     bl_label = "Import Flagrum Environment (.fed)"
     filename_ext = ".fed"
 
-    filter_glob: StringProperty(
-        default="*.fed",
-        options={'HIDDEN'}
-    )
+    filter_glob: StringProperty(default="*.fed", options={"HIDDEN"})
 
     def execute(self, context):
         environment_path = self.filepath
@@ -140,7 +130,7 @@ class ImportEnvironmentOperator(Operator, ImportHelper):
                 if mesh_data is not None:
                     self.import_mesh(context, mesh_data, model, meshes)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
     def import_mesh(self, context: ImportContext, mesh_data: Gpubin, model: EnvironmentModelMetadata, meshes):
         for mesh_metadata in mesh_data.Meshes:
@@ -164,17 +154,13 @@ class ImportEnvironmentOperator(Operator, ImportHelper):
 
     def transform_mesh(self, mesh: Mesh, model: EnvironmentModelMetadata):
         # Matrix that corrects the axes from FBX coordinate system
-        correction_matrix = Matrix([
-            [1, 0, 0],
-            [0, 0, -1],
-            [0, 1, 0]
-        ])
+        correction_matrix = Matrix([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
         # Compose a transformation matrix from the model node transforms
         scale_vector = Vector([model.Scale, model.Scale, model.Scale])
-        rotation_euler = Vector([math.radians(model.Rotation[0]),
-                                 math.radians(model.Rotation[1]),
-                                 math.radians(model.Rotation[2])])
+        rotation_euler = Vector(
+            [math.radians(model.Rotation[0]), math.radians(model.Rotation[1]), math.radians(model.Rotation[2])]
+        )
         position_vector = Vector([model.Position[0], model.Position[1], model.Position[2]])
 
         # If the model node doesn't have a rotation, we need to plug the first prefab transformation in here instead
@@ -182,9 +168,9 @@ class ImportEnvironmentOperator(Operator, ImportHelper):
         skip_first = False
         if -0.01 < model.Rotation[0] < 0.01 and -0.01 < model.Rotation[1] < 0.01 and -0.01 < model.Rotation[2] < 0.01:
             for rotation in reversed(model.PrefabRotations):
-                rotation_euler = Vector([math.radians(rotation[0]),
-                                         math.radians(rotation[1]),
-                                         math.radians(rotation[2])])
+                rotation_euler = Vector(
+                    [math.radians(rotation[0]), math.radians(rotation[1]), math.radians(rotation[2])]
+                )
                 skip_first = True
                 break
 
@@ -215,32 +201,29 @@ class ImportEnvironmentOperator(Operator, ImportHelper):
 
 class ImportTerrainOperator(Operator, ImportHelper):
     """Imports data from a Flagrum Terrain Pack"""
+
     bl_idname = "flagrum.terrain_import"
     bl_label = "Import Flagrum Terrain (.ftd)"
     filename_ext = ".ftd"
 
-    filter_glob: StringProperty(
-        default="*.ftd",
-        options={'HIDDEN'}
-    )
+    filter_glob: StringProperty(default="*.ftd", options={"HIDDEN"})
 
     mesh_resolution: EnumProperty(
         items=(
-            ('0', '512x512', ''),
-            ('1', '256x256', ''),
-            ('2', '128x128', ''),
-            ('3', '64x64', ''),
-            ('4', '32x32', ''),
-            ('5', '16x16', '')
+            ("0", "512x512", ""),
+            ("1", "256x256", ""),
+            ("2", "128x128", ""),
+            ("3", "64x64", ""),
+            ("4", "32x32", ""),
+            ("5", "16x16", ""),
         ),
         name="Quads",
         description="The resolution of each terrain tile, measured in quads",
-        default='0'
+        default="0",
     )
 
     use_high_textures: BoolProperty(
-        name="Use Experimental Shader",
-        description="Import with texture splatting shader setup"
+        name="Use Experimental Shader", description="Import with texture splatting shader setup"
     )
 
     def draw(self, context):
@@ -250,8 +233,10 @@ class ImportTerrainOperator(Operator, ImportHelper):
 
         layout.label(text=" ")
         layout.label(text="!!! WARNING: Experimental !!!")
-        draw_lines(layout,
-                   text="This feature is experimental and will only run in cycles. The shader will only run on extremely good hardware.")
+        draw_lines(
+            layout,
+            text="This feature is experimental and will only run in cycles. The shader will only run on extremely good hardware.",
+        )
         layout.prop(self, property="use_high_textures")
 
     def execute(self, context):
@@ -261,10 +246,11 @@ class ImportTerrainOperator(Operator, ImportHelper):
         import_file = open(terrain_path)
         import_data = import_file.read()
         data: list[TerrainMetadata] = json.loads(import_data, object_hook=lambda d: SimpleNamespace(**d))
-        context = TerrainImportContext(directory, filename_without_extension, self.mesh_resolution,
-                                       self.use_high_textures)
+        context = TerrainImportContext(
+            directory, filename_without_extension, self.mesh_resolution, self.use_high_textures
+        )
         generate_terrain(context, data)
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class FlagrumImportMenu(Menu):

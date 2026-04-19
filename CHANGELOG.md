@@ -8,6 +8,27 @@ This fork diverges from upstream `Kizari/Flagrum` starting at `2.0.0`. The refer
 
 _No changes yet._
 
+## [2.0.1] - 2026-04-19 — Post-release docs & formatting
+
+### Documentation
+
+- **Top-level [README.md](README.md) overhauled.**
+  - Removed a stale duplicated copy of the upstream Kizari README that had been concatenated to the bottom of the file (along with its misleading "please use Blender 3.0" warning that contradicted the modern Blender 5+ section).
+  - Repointed all repo URLs (clone, releases) from `Kizari/Flagrum-Blender` to `Tzeentchnet/Flagrum-Blender`.
+  - Clarified that `.fed` / `.ftd` packs come from Flagrum Desktop's existing export workflow rather than a separate tool.
+  - Added a drag-to-install note for the Blender Extensions UI.
+  - Documented the per-import asset-catalog dedupe behaviour delivered in Phase 3.
+  - Added a "no in-app auto-updater" entry under Known Limitations so users don't hunt for the removed CGCookie panel.
+- **License section expanded** with the full SPDX identifier (`GPL-3.0-or-later`, matching [`blender_manifest.toml`](src/Flagrum.Blender/blender_manifest.toml)), explicit upstream attribution (Kizari, 2021–2025), and fork attribution (Kenneth Peters / Tzeentchnet, 2026).
+
+### Code style
+
+- **Ruff format sweep** — `py -3.13 -m ruff format src\Flagrum.Blender` reformatted 48 files (1 already clean). Style-only; no behaviour changes. `ruff check` continues to pass and `compileall -q` is silent. Landed as a single dedicated commit so behaviour blame remains intact.
+
+### Notes
+
+- **Tag scheme going forward**: future releases will use semver tags (`v2.0.1`, `v2.1.0`, …). The original `flagrum` tag for the 2.0.0 release stays as a one-off.
+
 ## [2.0.0] - 2026-04-18 — Blender 5+ modernization
 
 ### Highlights

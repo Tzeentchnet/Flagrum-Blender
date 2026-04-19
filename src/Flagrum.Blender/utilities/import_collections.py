@@ -37,15 +37,16 @@ from bpy.types import Collection
 
 # Blender 4.1+ uses a string enum for ``Collection.color_tag``. Centralise the
 # choices so the palette can be retuned in one place.
-COLOR_TAG_ROOT = "COLOR_01"   # red
-COLOR_TAG_LOD = "COLOR_04"    # green
-COLOR_TAG_VEM = "COLOR_05"    # blue
+COLOR_TAG_ROOT = "COLOR_01"  # red
+COLOR_TAG_LOD = "COLOR_04"  # green
+COLOR_TAG_VEM = "COLOR_05"  # blue
 COLOR_TAG_PARTS = "COLOR_06"  # purple
 
 
 # ---------------------------------------------------------------------------
 # Root collection bundle
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class RootCollections:
@@ -113,6 +114,7 @@ class RootCollections:
 # Construction
 # ---------------------------------------------------------------------------
 
+
 def build_root_collections(model_name: str, root: Collection) -> RootCollections:
     """Wrap an existing root ``Collection`` in a ``RootCollections`` bundle.
 
@@ -128,6 +130,7 @@ def build_root_collections(model_name: str, root: Collection) -> RootCollections
 # ---------------------------------------------------------------------------
 # Parts Empties
 # ---------------------------------------------------------------------------
+
 
 def create_part_empties(
     rc: RootCollections,

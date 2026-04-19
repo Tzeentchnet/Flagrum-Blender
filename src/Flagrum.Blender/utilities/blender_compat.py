@@ -76,6 +76,7 @@ def is_principled_socket(socket, role: str) -> bool:
 # Replacement node helpers
 # ---------------------------------------------------------------------------
 
+
 def new_separate_color(node_tree, mode: str = "RGB"):
     """Add a Separate Color node (RGB mode by default)."""
     node = node_tree.nodes.new("ShaderNodeSeparateColor")
@@ -109,6 +110,7 @@ def new_mix_rgba(node_tree, blend_type: str = "MIX", factor: float = 1.0):
 # Node group socket helpers
 # ---------------------------------------------------------------------------
 
+
 def node_group_add_input(group, name: str, socket_type: str):
     """Add an input socket to a node group's interface (Blender 4.0+ API)."""
     return group.interface.new_socket(name=name, in_out="INPUT", socket_type=socket_type)
@@ -122,6 +124,7 @@ def node_group_add_output(group, name: str, socket_type: str):
 # ---------------------------------------------------------------------------
 # Material / mesh tweaks
 # ---------------------------------------------------------------------------
+
 
 def set_alpha_clip(material) -> None:
     """Mark a material as alpha-clipped using the EEVEE-Next API."""
@@ -148,6 +151,7 @@ def apply_custom_split_normals(mesh, normals) -> None:
 # ---------------------------------------------------------------------------
 # Vertex color helpers
 # ---------------------------------------------------------------------------
+
 
 def new_corner_color_attribute(mesh, name: str):
     """Create a per-corner byte-color attribute (replaces ``vertex_colors.new``)."""

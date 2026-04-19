@@ -9,11 +9,7 @@ from ..utilities.blender_compat import apply_custom_split_normals
 from ..utilities.bpy_context import set_object_mode
 
 # Matrix that converts the axes back to FBX coordinate system
-conversion_matrix = Matrix([
-    [1, 0, 0],
-    [0, 0, 1],
-    [0, -1, 0]
-])
+conversion_matrix = Matrix([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
 
 
 def pack_mesh(preserve_normals: bool):
@@ -24,7 +20,7 @@ def pack_mesh(preserve_normals: bool):
     mesh_data.BoneTable = bone_table
 
     for obj in bpy.data.objects:
-        if obj.type == 'MESH':
+        if obj.type == "MESH":
             mesh = MeshData()
             mesh.Name = obj.name
             mesh.Material = _pack_material(obj)
@@ -47,7 +43,7 @@ def pack_mesh(preserve_normals: bool):
             for vertex in mesh_copy.data.vertices:
                 vertex.select = True
 
-            set_object_mode(mesh_copy, 'EDIT')
+            set_object_mode(mesh_copy, "EDIT")
             bmesh_copy = bmesh.from_edit_mesh(mesh_copy.data)
 
             # Clear seams as we need to use them for splitting
@@ -68,25 +64,26 @@ def pack_mesh(preserve_normals: bool):
             bmesh.ops.split_edges(bmesh_copy, edges=island_boundaries)
 
             # Triangulate faces as Luminous only supports tris
-            bmesh.ops.triangulate(bmesh_copy, faces=bmesh_copy.faces, quad_method='FIXED', ngon_method='EAR_CLIP')
+            bmesh.ops.triangulate(bmesh_copy, faces=bmesh_copy.faces, quad_method="FIXED", ngon_method="EAR_CLIP")
 
             # Delete any loose vertices
-            bmesh.ops.delete(bmesh_copy, geom=[v for v in bmesh_copy.verts if not v.link_faces], context='VERTS')
+            bmesh.ops.delete(bmesh_copy, geom=[v for v in bmesh_copy.verts if not v.link_faces], context="VERTS")
 
             # Apply the changes to the cloned mesh
             bmesh.update_edit_mesh(mesh_copy.data)
-            set_object_mode(mesh_copy, 'OBJECT')
+            set_object_mode(mesh_copy, "OBJECT")
 
             # Have set this as an export option as it can mess up normals on double-sided meshes
             if preserve_normals:
                 # Apply correct normals from original to fix issues from edge-splitting
                 mesh_copy.data.polygons.foreach_set("use_smooth", [True] * len(mesh_copy.data.polygons))
-                modifier = mesh_copy.modifiers.new(name="custom_normals_correction_" + mesh_copy.name,
-                                                   type='DATA_TRANSFER')
+                modifier = mesh_copy.modifiers.new(
+                    name="custom_normals_correction_" + mesh_copy.name, type="DATA_TRANSFER"
+                )
                 modifier.use_loop_data = True
-                modifier.data_types_loops = {'CUSTOM_NORMAL'}
-                modifier.loop_mapping = 'NEAREST_NORMAL'
-                modifier.mix_mode = 'REPLACE'
+                modifier.data_types_loops = {"CUSTOM_NORMAL"}
+                modifier.loop_mapping = "NEAREST_NORMAL"
+                modifier.mix_mode = "REPLACE"
                 modifier.object = obj
                 bpy.ops.object.modifier_apply(modifier=modifier.name)
 

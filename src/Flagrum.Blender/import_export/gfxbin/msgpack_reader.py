@@ -1,4 +1,4 @@
-﻿import struct
+import struct
 
 from .type_format import Format
 
@@ -21,7 +21,7 @@ class MessagePackReader:
         elif Format.FixStrStart <= format_type <= Format.FixStrEnd:
             size = format_type & 0x1F
             if size > 0:
-                result = struct.unpack_from("<" + str(size - 1) + "s", self.buffer, self.offset)[0].decode('utf-8')
+                result = struct.unpack_from("<" + str(size - 1) + "s", self.buffer, self.offset)[0].decode("utf-8")
                 self.offset += size
                 return result
             else:
@@ -33,19 +33,19 @@ class MessagePackReader:
         elif format_type == Format.Bin8:
             size = struct.unpack_from("<B", self.buffer, self.offset)[0]
             self.offset += 1
-            result = self.buffer[self.offset:(self.offset + size)]
+            result = self.buffer[self.offset : (self.offset + size)]
             self.offset += size
             return result
         elif format_type == Format.Bin16:
             size = struct.unpack_from("<H", self.buffer, self.offset)[0]
             self.offset += 2
-            result = self.buffer[self.offset:(self.offset + size)]
+            result = self.buffer[self.offset : (self.offset + size)]
             self.offset += size
             return result
         elif format_type == Format.Bin32:
             size = struct.unpack_from("<I", self.buffer, self.offset)[0]
             self.offset += 4
-            result = self.buffer[self.offset:(self.offset + size)]
+            result = self.buffer[self.offset : (self.offset + size)]
             self.offset += size
             return result
         elif format_type == Format.Float32:
@@ -91,19 +91,19 @@ class MessagePackReader:
         elif format_type == Format.Str8:
             size = struct.unpack_from("<B", self.buffer, self.offset)[0]
             self.offset += 1
-            result = struct.unpack_from("<" + str(size - 1) + "s", self.buffer, self.offset)[0].decode('utf-8')
+            result = struct.unpack_from("<" + str(size - 1) + "s", self.buffer, self.offset)[0].decode("utf-8")
             self.offset += size
             return result
         elif format_type == Format.Str16:
             size = struct.unpack_from("<H", self.buffer, self.offset)[0]
             self.offset += 2
-            result = struct.unpack_from("<" + str(size - 1) + "s", self.buffer, self.offset)[0].decode('utf-8')
+            result = struct.unpack_from("<" + str(size - 1) + "s", self.buffer, self.offset)[0].decode("utf-8")
             self.offset += size
             return result
         elif format_type == Format.Str32:
             size = struct.unpack_from("<I", self.buffer, self.offset)[0]
             self.offset += 4
-            result = struct.unpack_from("<" + str(size - 1) + "s", self.buffer, self.offset)[0].decode('utf-8')
+            result = struct.unpack_from("<" + str(size - 1) + "s", self.buffer, self.offset)[0].decode("utf-8")
             self.offset += size
             return result
         elif format_type == Format.Array16:

@@ -1,4 +1,4 @@
-﻿import struct
+import struct
 from dataclasses import dataclass
 
 from ..gfxbinheader import GfxbinHeader

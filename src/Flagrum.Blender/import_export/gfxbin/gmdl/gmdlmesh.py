@@ -1,4 +1,4 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
 
 from .gmdlmeshpart import GmdlMeshPart
 from .gmdlsubgeometry import GmdlSubgeometry
@@ -61,10 +61,7 @@ class GmdlMesh:
         self.vertex_layout_type = reader.read()
         self.unknown2 = reader.read()
 
-        self.AABB = [
-            [reader.read(), reader.read(), reader.read()],
-            [reader.read(), reader.read(), reader.read()]
-        ]
+        self.AABB = [[reader.read(), reader.read(), reader.read()], [reader.read(), reader.read(), reader.read()]]
 
         self.is_oriented_bb = reader.read()
 
@@ -72,7 +69,7 @@ class GmdlMesh:
             [reader.read(), reader.read(), reader.read()],
             [reader.read(), reader.read(), reader.read()],
             [reader.read(), reader.read(), reader.read()],
-            [reader.read(), reader.read(), reader.read()]
+            [reader.read(), reader.read(), reader.read()],
         ]
 
         self.primitive_type = reader.read()

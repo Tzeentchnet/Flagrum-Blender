@@ -33,17 +33,19 @@ class PartsSettings(PropertyGroup):
 
 class AddPartsGroupOperator(Operator):
     """Creates a new parts group for this object"""
+
     bl_idname = "flagrum.parts_add"
     bl_label = ""
 
     def execute(self, context):
         active_object = context.view_layer.objects.active
-        active_object.data.attributes.new(name="Parts", type='BOOLEAN', domain='FACE')
-        return {'FINISHED'}
+        active_object.data.attributes.new(name="Parts", type="BOOLEAN", domain="FACE")
+        return {"FINISHED"}
 
 
 class RemovePartsGroupOperator(Operator):
     """Removes an existing parts group from this object"""
+
     bl_idname = "flagrum.parts_remove"
     bl_label = ""
 
@@ -57,7 +59,7 @@ class RemovePartsGroupOperator(Operator):
         parts: PartsSettings = active_object.flagrum_parts
         attributes = active_object.data.attributes
         attributes.remove(attributes[parts.active_parts_group])
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class AssignPartsGroupOperator(Operator):
@@ -68,38 +70,38 @@ class AssignPartsGroupOperator(Operator):
         # Must do this in object mode or the parts attributes will be empty
         face_layers = {}
         active_object = context.view_layer.objects.active
-        set_object_mode(active_object, 'OBJECT')
+        set_object_mode(active_object, "OBJECT")
         parts: PartsSettings = context.view_layer.objects.active.flagrum_parts
         active_mesh: Mesh = context.view_layer.objects.active.data
 
         # Get state of all parts layers
         for i in range(len(active_mesh.attributes)):
             layer = active_mesh.attributes[i]
-            if layer.domain == 'FACE' and layer.data_type == 'BOOLEAN':
+            if layer.domain == "FACE" and layer.data_type == "BOOLEAN":
                 faces = [False] * len(active_mesh.polygons)
                 layer.data.foreach_get("value", faces)
                 face_layers[i] = faces
 
-        set_object_mode(active_object, 'EDIT')
+        set_object_mode(active_object, "EDIT")
         bm = bmesh.from_edit_mesh(active_mesh)
         bm.faces.ensure_lookup_table()
 
         for key in face_layers:
             layer = active_mesh.attributes[key]
-            if layer.domain == 'FACE' and layer.data_type == 'BOOLEAN':
+            if layer.domain == "FACE" and layer.data_type == "BOOLEAN":
                 for i in range(len(bm.faces)):
                     face = bm.faces[i]
                     if face.select:
                         face_layers[key][i] = key == parts.active_parts_group
 
-        set_object_mode(active_object, 'OBJECT')
+        set_object_mode(active_object, "OBJECT")
         for key in face_layers:
             layer = active_mesh.attributes[key]
             layer.data.foreach_set("value", face_layers[key])
 
-        set_object_mode(active_object, 'EDIT')
+        set_object_mode(active_object, "EDIT")
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class UnassignPartsGroupOperator(Operator):
@@ -109,7 +111,7 @@ class UnassignPartsGroupOperator(Operator):
     def execute(self, context):
         # Must do this in object mode or the parts attributes will be empty
         active_object = context.view_layer.objects.active
-        set_object_mode(active_object, 'OBJECT')
+        set_object_mode(active_object, "OBJECT")
         parts: PartsSettings = context.view_layer.objects.active.flagrum_parts
         active_mesh: Mesh = context.view_layer.objects.active.data
         layer = active_mesh.attributes[parts.active_parts_group]
@@ -117,7 +119,7 @@ class UnassignPartsGroupOperator(Operator):
         faces = [False] * len(active_mesh.polygons)
         layer.data.foreach_get("value", faces)
 
-        set_object_mode(active_object, 'EDIT')
+        set_object_mode(active_object, "EDIT")
         bm = bmesh.from_edit_mesh(active_mesh)
         bm.faces.ensure_lookup_table()
 
@@ -126,12 +128,12 @@ class UnassignPartsGroupOperator(Operator):
             if face.select:
                 faces[i] = False
 
-        set_object_mode(active_object, 'OBJECT')
+        set_object_mode(active_object, "OBJECT")
         layer = active_mesh.attributes[parts.active_parts_group]
         layer.data.foreach_set("value", faces)
-        set_object_mode(active_object, 'EDIT')
+        set_object_mode(active_object, "EDIT")
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class SelectPartsGroupOperator(Operator):
@@ -141,14 +143,14 @@ class SelectPartsGroupOperator(Operator):
     def execute(self, context):
         # Must do this in object mode or the parts attributes will be empty
         active_object = context.view_layer.objects.active
-        set_object_mode(active_object, 'OBJECT')
+        set_object_mode(active_object, "OBJECT")
         parts: PartsSettings = context.view_layer.objects.active.flagrum_parts
         active_mesh: Mesh = context.view_layer.objects.active.data
         parts_layer = active_mesh.attributes[parts.active_parts_group]
         faces = [False] * len(active_mesh.polygons)
         parts_layer.data.foreach_get("value", faces)
 
-        set_object_mode(active_object, 'EDIT')
+        set_object_mode(active_object, "EDIT")
         bm = bmesh.from_edit_mesh(active_mesh)
         bm.faces.ensure_lookup_table()
 
@@ -158,7 +160,7 @@ class SelectPartsGroupOperator(Operator):
 
         bm.select_flush(True)
         bmesh.update_edit_mesh(active_mesh)
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class DeselectPartsGroupOperator(Operator):
@@ -168,14 +170,14 @@ class DeselectPartsGroupOperator(Operator):
     def execute(self, context):
         # Must do this in object mode or the parts attributes will be empty
         active_object = context.view_layer.objects.active
-        set_object_mode(active_object, 'OBJECT')
+        set_object_mode(active_object, "OBJECT")
         parts: PartsSettings = context.view_layer.objects.active.flagrum_parts
         active_mesh: Mesh = context.view_layer.objects.active.data
         parts_layer = active_mesh.attributes[parts.active_parts_group]
         faces = [False] * len(active_mesh.polygons)
         parts_layer.data.foreach_get("value", faces)
 
-        set_object_mode(active_object, 'EDIT')
+        set_object_mode(active_object, "EDIT")
         bm = bmesh.from_edit_mesh(active_mesh)
         bm.faces.ensure_lookup_table()
 
@@ -185,37 +187,40 @@ class DeselectPartsGroupOperator(Operator):
 
         bm.select_flush(True)
         bmesh.update_edit_mesh(active_mesh)
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class PartsGroupsList(UIList):
     """UI List for Parts Groups"""
+
     bl_idname = "OBJECT_UL_flagrum_parts_groups_list"
 
-    def draw_item(self,
-                  context: Context,
-                  layout: UILayout,
-                  data: AnyType,
-                  item: Attribute,
-                  icon: int,
-                  active_data: AnyType,
-                  active_property: str,
-                  index: int = 0,
-                  flt_flag: int = 0):
-        if item.domain == 'FACE' and item.data_type == 'BOOLEAN':
-            layout.prop(item, property="name", text="", emboss=False, icon='CLIPUV_DEHLT')
+    def draw_item(
+        self,
+        context: Context,
+        layout: UILayout,
+        data: AnyType,
+        item: Attribute,
+        icon: int,
+        active_data: AnyType,
+        active_property: str,
+        index: int = 0,
+        flt_flag: int = 0,
+    ):
+        if item.domain == "FACE" and item.data_type == "BOOLEAN":
+            layout.prop(item, property="name", text="", emboss=False, icon="CLIPUV_DEHLT")
 
 
 class PartsSystemPanel(Panel):
     bl_idname = "OBJECT_PT_flagrum_parts_system"
     bl_label = "Parts Groups"
     bl_context = "data"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
 
     @classmethod
     def poll(cls, context):
-        return bpy.context.view_layer.objects.active.type == 'MESH'
+        return bpy.context.view_layer.objects.active.type == "MESH"
 
     def draw(self, context):
         layout = self.layout
@@ -226,12 +231,12 @@ class PartsSystemPanel(Panel):
         row.template_list(PartsGroupsList.bl_idname, "", active_object.data, "attributes", parts, "active_parts_group")
         column = row.column()
         top_column = column.column(align=True)
-        top_column.operator(AddPartsGroupOperator.bl_idname, icon='ADD', text="")
-        top_column.operator(RemovePartsGroupOperator.bl_idname, icon='REMOVE', text="")
+        top_column.operator(AddPartsGroupOperator.bl_idname, icon="ADD", text="")
+        top_column.operator(RemovePartsGroupOperator.bl_idname, icon="REMOVE", text="")
         # bottom_column = column.column(align=True)
         # bottom_column.operator(AddPartsGroupOperator.bl_idname, icon='TRIA_UP', text="")
         # bottom_column.operator(AddPartsGroupOperator.bl_idname, icon='TRIA_DOWN', text="")
-        if context.view_layer.objects.active.mode == 'EDIT' and parts.active_parts_group > -1:
+        if context.view_layer.objects.active.mode == "EDIT" and parts.active_parts_group > -1:
             row = layout.row()
             left_row = row.row(align=True)
             left_row.operator(AssignPartsGroupOperator.bl_idname)

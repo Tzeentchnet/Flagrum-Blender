@@ -19,7 +19,6 @@ from .gfxbin.msgpack_reader import MessagePackReader
 
 
 class Interop:
-
     @staticmethod
     def import_material_inputs(gfxbin_path: str) -> dict[str, list[float]]:
         """Read a ``.gmtl.gfxbin`` file and return shader-gen-name -> values.

@@ -35,7 +35,7 @@ class ImportContext:
         p0 = os.path.split(path_name)
         p1 = p0[0]
         f_idx = p1.rfind("\\")
-        self.amdl_path = p1 + "\\" + p1[f_idx + 1:] + ".amdl"
+        self.amdl_path = p1 + "\\" + p1[f_idx + 1 :] + ".amdl"
 
         file_name = gfxbin_file_path.split("\\")[-1]
         group_name = ""
@@ -57,18 +57,23 @@ class ImportContext:
                 gpubin_uri = header.dependencies[key]
                 break
 
-        self.base_uri = gpubin_uri[:gpubin_uri.rfind('/')]
-        tokens = self.gfxbin_path.split('\\')[:-1]
+        self.base_uri = gpubin_uri[: gpubin_uri.rfind("/")]
+        tokens = self.gfxbin_path.split("\\")[:-1]
 
         base_directory = ""
         for i in range(len(tokens)):
-            base_directory += tokens[i] + '\\'
+            base_directory += tokens[i] + "\\"
 
         self.base_directory = base_directory[:-1]
 
     def get_absolute_path_from_uri(self, uri: str):
-        if uri.endswith(".tif") or uri.endswith(".exr") or uri.endswith(".png") or uri.endswith(".dds") or uri.endswith(
-                ".btex"):
+        if (
+            uri.endswith(".tif")
+            or uri.endswith(".exr")
+            or uri.endswith(".png")
+            or uri.endswith(".dds")
+            or uri.endswith(".btex")
+        ):
             return self._resolve_texture_path(uri)
         else:
             path = self._get_absolute_path_from_uri(uri)
@@ -114,7 +119,7 @@ class ImportContext:
 
         # Calculate the absolute path of the highest common folder
         base_path = ""
-        base_path_tokens = self.base_directory.split('\\')
+        base_path_tokens = self.base_directory.split("\\")
         if counter > 0:
             base_path_tokens = base_path_tokens[:-counter]
         for i in range(len(base_path_tokens)):
@@ -140,9 +145,9 @@ class ImportContext:
     def _resolve_texture_path(self, uri: str):
         extensions = ["dds", "tga", "png"]
 
-        high = uri[:uri.rfind('.')] + "_$h" + uri[uri.rfind('.'):]
+        high = uri[: uri.rfind(".")] + "_$h" + uri[uri.rfind(".") :]
         highest = high.replace("/sourceimages/", "/highimages/")
-        medium = uri[:uri.rfind('.')] + "_$m1" + uri[uri.rfind('.'):]
+        medium = uri[: uri.rfind(".")] + "_$m1" + uri[uri.rfind(".") :]
         low = uri
 
         uris = [highest, high, medium, low]
@@ -152,14 +157,14 @@ class ImportContext:
             path = self._get_absolute_path_from_uri(uris[i])
             if path is not None:
                 for j in range(len(extensions)):
-                    without_extension = path[:path.rfind(".")]
+                    without_extension = path[: path.rfind(".")]
                     with_extension = without_extension + "." + extensions[j]
                     paths_checked.append(with_extension)
 
                     if os.path.exists(with_extension):
                         return with_extension
                     else:
-                        name = without_extension.split('\\')[-1]
+                        name = without_extension.split("\\")[-1]
                         udim = f"{without_extension}\\{name}.1001.{extensions[j]}"
                         paths_checked.append(udim)
                         if os.path.exists(udim):

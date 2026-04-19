@@ -62,8 +62,14 @@ def _normals_to_array(normals) -> np.ndarray:
     return out * inv_127
 
 
-def generate_mesh(context: ImportContext, collection: Collection, mesh_data: MeshData, bone_table, parts,
-                  use_correction_matrix: bool = True):
+def generate_mesh(
+    context: ImportContext,
+    collection: Collection,
+    mesh_data: MeshData,
+    bone_table,
+    parts,
+    use_correction_matrix: bool = True,
+):
     # Correct the vertex positions in one vectorised matmul (was a per-vertex
     # ``Matrix @ Vector`` loop).
     positions = _positions_to_array(mesh_data.VertexPositions)
@@ -134,8 +140,9 @@ def generate_mesh(context: ImportContext, collection: Collection, mesh_data: Mes
     polygon_count = len(mesh.polygons)
     if len(parts) > 0:
         for parts_group in mesh_data.MeshParts:
-            parts_layer: IntAttribute = mesh.attributes.new(name=parts[str(parts_group.PartsId)], type='BOOLEAN',
-                                                            domain='FACE')
+            parts_layer: IntAttribute = mesh.attributes.new(
+                name=parts[str(parts_group.PartsId)], type="BOOLEAN", domain="FACE"
+            )
 
             start_index = int(parts_group.StartIndex / 3)
             index_count = int(parts_group.IndexCount / 3)
@@ -177,9 +184,7 @@ def generate_mesh(context: ImportContext, collection: Collection, mesh_data: Mes
             if not np.any(nz):
                 continue
 
-            v_grid = np.broadcast_to(
-                np.arange(wv.shape[0], dtype=np.int64)[:, None], wv.shape
-            )
+            v_grid = np.broadcast_to(np.arange(wv.shape[0], dtype=np.int64)[:, None], wv.shape)
             slot_v.append(v_grid[nz])
             slot_b.append(wi[nz])
             slot_w.append(wv[nz].astype(np.int64, copy=False))
@@ -208,12 +213,13 @@ def generate_mesh(context: ImportContext, collection: Collection, mesh_data: Mes
                 wts_s = wts[order]
                 verts_s = verts[order]
 
-                run_starts = np.concatenate((
-                    [0],
-                    np.flatnonzero((bones_s[1:] != bones_s[:-1])
-                                   | (wts_s[1:] != wts_s[:-1])) + 1,
-                    [bones_s.size],
-                ))
+                run_starts = np.concatenate(
+                    (
+                        [0],
+                        np.flatnonzero((bones_s[1:] != bones_s[:-1]) | (wts_s[1:] != wts_s[:-1])) + 1,
+                        [bones_s.size],
+                    )
+                )
 
                 inv_255 = 1.0 / 255.0
                 for r in range(run_starts.size - 1):
@@ -224,12 +230,11 @@ def generate_mesh(context: ImportContext, collection: Collection, mesh_data: Mes
                     vg = vertex_groups.get(bone_id)
                     if vg is None:
                         continue
-                    vg.add(verts_s[a:b].tolist(), weight, 'REPLACE')
+                    vg.add(verts_s[a:b].tolist(), weight, "REPLACE")
 
     # Link the mesh to the armature
     if len(bone_table) > 0:
-        mod = mesh_object.modifiers.new(
-            type="ARMATURE", name=collection.name)
+        mod = mesh_object.modifiers.new(type="ARMATURE", name=collection.name)
         mod.use_vertex_groups = True
 
         armature = bpy.data.objects[collection.name]
