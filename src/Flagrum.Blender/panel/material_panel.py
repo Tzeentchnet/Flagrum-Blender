@@ -1,12 +1,11 @@
 ﻿import bpy
 import bpy.path
 from bpy.props import StringProperty
-from bpy.types import Panel, Operator
+from bpy.types import Operator, Panel
 from bpy_extras.io_utils import ImportHelper
 
-from .material_data import material_properties, MaterialSettings, material_weight_limit
-from .. import addon_updater_ops
 from ..import_export.interop import Interop
+from .material_data import MaterialSettings, material_properties, material_weight_limit
 
 
 class TextureSlotOperator(Operator, ImportHelper):
@@ -169,8 +168,6 @@ class MaterialEditorPanel(Panel):
     def draw(self, context):
         layout = self.layout
 
-        addon_updater_ops.check_for_update_background()
-
         active_object = context.view_layer.objects.active
         material = active_object.flagrum_material
 
@@ -178,8 +175,6 @@ class MaterialEditorPanel(Panel):
         for property_definition in material.property_collection:
             if property_definition.material_id == material.preset:
                 active_material_data = property_definition
-
-        addon_updater_ops.update_notice_box_ui(self, context)
 
         layout.prop(data=material, property="preset")
 
@@ -195,7 +190,7 @@ class MaterialEditorPanel(Panel):
 
             iterable_properties = active_material_data.property_collection.items().copy()
             iterable_properties.sort(key=lambda p: (p[1].importance, p[1].property_name))
-            for empty_string, prop in iterable_properties:
+            for _empty_string, prop in iterable_properties:
                 if prop.is_relevant and prop.property_type == 'TEXTURE':
                     row = layout.row()
                     row.label(text=prop.property_name)
@@ -204,7 +199,7 @@ class MaterialEditorPanel(Panel):
                     texture_slot.property = prop.property_name
                     texture_slot = row.operator(ClearTextureOperator.bl_idname, text="", icon='X')
                     texture_slot.property = prop.property_name
-            for empty_string, prop in iterable_properties:
+            for _empty_string, prop in iterable_properties:
                 if prop.is_relevant and prop.property_type == 'INPUT':
                     layout.prop(data=active_material_data, property=prop.property_name)
 
@@ -212,7 +207,7 @@ class MaterialEditorPanel(Panel):
                 layout.prop(data=material, property="show_advanced")
 
             if material.show_advanced:
-                for empty_string, prop in iterable_properties:
+                for _empty_string, prop in iterable_properties:
                     if not prop.is_relevant and prop.property_type == 'TEXTURE':
                         row = layout.row()
                         row.label(text=prop.property_name)
@@ -221,6 +216,6 @@ class MaterialEditorPanel(Panel):
                         texture_slot.property = prop.property_name
                         texture_slot = row.operator(ClearTextureOperator.bl_idname, text="", icon='X')
                         texture_slot.property = prop.property_name
-                for empty_string, prop in iterable_properties:
+                for _empty_string, prop in iterable_properties:
                     if not prop.is_relevant and prop.property_type == 'INPUT':
                         layout.prop(data=active_material_data, property=prop.property_name)

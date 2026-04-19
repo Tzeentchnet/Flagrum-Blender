@@ -1,12 +1,20 @@
-﻿import math
+import math
 from os.path import exists
 
 import bpy
 import numpy
 from bpy.types import Material, NodeTree
-from mathutils import Vector, Matrix
+from mathutils import Matrix, Vector
 
 from ..entities import TerrainImportContext, TerrainMetadata
+from ..utilities.blender_compat import (
+    new_combine_color,
+    new_mix_rgba,
+    new_separate_color,
+    node_group_add_input,
+    node_group_add_output,
+    principled_input,
+)
 
 texture_array_map = [
     (0, 0.67742, 0.04839),
@@ -140,8 +148,8 @@ def generate_terrain(context: TerrainImportContext, data: list[TerrainMetadata])
         material.use_nodes = True
         material.use_backface_culling = True
         bsdf = material.node_tree.nodes["Principled BSDF"]
-        bsdf.inputs[7].default_value = 0.3  # Specular
-        bsdf.inputs[9].default_value = 0.9  # Roughness
+        principled_input(bsdf, 'specular').default_value = 0.3  # Specular
+        principled_input(bsdf, 'roughness').default_value = 0.9  # Roughness
 
         if context.use_high_materials:
             mask_path = context.directory + "\\" + context.filename_without_extension + "_terrain_textures\\" + tile.Name + "\\merged_mask_map.tga"
@@ -178,74 +186,74 @@ def _setup_normal_map(context: TerrainImportContext, material: Material, bsdf, t
         texture.image.colorspace_settings.name = 'Non-Color'
     norm_map = material.node_tree.nodes.new('ShaderNodeNormalMap')
     material.node_tree.links.new(bsdf.inputs['Normal'], norm_map.outputs['Normal'])
-    separate_rgb = material.node_tree.nodes.new('ShaderNodeSeparateRGB')
-    combine_rgb = material.node_tree.nodes.new('ShaderNodeCombineRGB')
+    separate_rgb = new_separate_color(material.node_tree)
+    combine_rgb = new_combine_color(material.node_tree)
     less_than = material.node_tree.nodes.new('ShaderNodeMath')
     less_than.operation = 'LESS_THAN'
     less_than.inputs[1].default_value = 0.01
     maximum = material.node_tree.nodes.new('ShaderNodeMath')
     maximum.operation = 'MAXIMUM'
-    material.node_tree.links.new(separate_rgb.inputs['Image'], texture.outputs['Color'])
-    material.node_tree.links.new(combine_rgb.inputs['R'], separate_rgb.outputs['R'])
-    material.node_tree.links.new(combine_rgb.inputs['G'], separate_rgb.outputs['G'])
-    material.node_tree.links.new(norm_map.inputs['Color'], combine_rgb.outputs['Image'])
-    material.node_tree.links.new(less_than.inputs[0], separate_rgb.outputs['B'])
-    material.node_tree.links.new(maximum.inputs[0], separate_rgb.outputs['B'])
+    material.node_tree.links.new(separate_rgb.inputs['Color'], texture.outputs['Color'])
+    material.node_tree.links.new(combine_rgb.inputs['Red'], separate_rgb.outputs['Red'])
+    material.node_tree.links.new(combine_rgb.inputs['Green'], separate_rgb.outputs['Green'])
+    material.node_tree.links.new(norm_map.inputs['Color'], combine_rgb.outputs['Color'])
+    material.node_tree.links.new(less_than.inputs[0], separate_rgb.outputs['Blue'])
+    material.node_tree.links.new(maximum.inputs[0], separate_rgb.outputs['Blue'])
     material.node_tree.links.new(maximum.inputs[1], less_than.outputs['Value'])
-    material.node_tree.links.new(combine_rgb.inputs['B'], maximum.outputs['Value'])
+    material.node_tree.links.new(combine_rgb.inputs['Blue'], maximum.outputs['Value'])
 
 
 def _setup_texture_splatting(context: TerrainImportContext, material: Material, bsdf, tile_name: str):
-    multiply = material.node_tree.nodes.new('ShaderNodeMixRGB')
+    multiply = new_mix_rgba(material.node_tree)
     multiply.blend_type = 'MULTIPLY'
-    material.node_tree.links.new(multiply.outputs['Color'], bsdf.inputs['Base Color'])
+    material.node_tree.links.new(multiply.outputs['Result'], bsdf.inputs['Base Color'])
 
-    mix = material.node_tree.nodes.new('ShaderNodeMixRGB')
-    material.node_tree.links.new(mix.outputs['Color'], multiply.inputs['Color1'])
+    mix = new_mix_rgba(material.node_tree)
+    material.node_tree.links.new(mix.outputs['Result'], multiply.inputs['A'])
 
-    separate_rgb = material.node_tree.nodes.new('ShaderNodeSeparateRGB')
-    material.node_tree.links.new(separate_rgb.outputs['R'], mix.inputs['Fac'])
-    material.node_tree.links.new(separate_rgb.outputs['G'], multiply.inputs['Fac'])
+    separate_rgb = new_separate_color(material.node_tree)
+    material.node_tree.links.new(separate_rgb.outputs['Red'], mix.inputs['Factor'])
+    material.node_tree.links.new(separate_rgb.outputs['Green'], multiply.inputs['Factor'])
 
     splat_map = material.node_tree.nodes.new('ShaderNodeTexImage')
     splat_path = context.directory + "\\" + context.filename_without_extension + "_terrain_textures\\" + tile_name + "\\slope_map.tga"
     if exists(splat_path):
         splat_map.image = bpy.data.images.load(splat_path, check_existing=True)
         splat_map.image.colorspace_settings.name = 'Non-Color'
-    material.node_tree.links.new(splat_map.outputs['Color'], separate_rgb.inputs['Image'])
+    material.node_tree.links.new(splat_map.outputs['Color'], separate_rgb.inputs['Color'])
 
     cliff_texture = material.node_tree.nodes.new('ShaderNodeTexImage')
     cliff_texture.image = bpy.data.images.load(context.directory + "\\common\\diffuse\\0.tga", check_existing=True)
-    material.node_tree.links.new(cliff_texture.outputs['Color'], mix.inputs['Color2'])
+    material.node_tree.links.new(cliff_texture.outputs['Color'], mix.inputs['B'])
 
-    mix_arrays = material.node_tree.nodes.new('ShaderNodeMixRGB')
-    material.node_tree.links.new(mix_arrays.outputs['Color'], mix.inputs['Color1'])
+    mix_arrays = new_mix_rgba(material.node_tree)
+    material.node_tree.links.new(mix_arrays.outputs['Result'], mix.inputs['A'])
 
     diffuse_group = _setup_texture_array_group(context, "Diffuse")
     array_blue = material.node_tree.nodes.new('ShaderNodeGroup')
     array_blue.node_tree = diffuse_group
-    material.node_tree.links.new(array_blue.outputs['Color'], mix_arrays.inputs['Color2'])
+    material.node_tree.links.new(array_blue.outputs['Color'], mix_arrays.inputs['B'])
 
     array_alpha = material.node_tree.nodes.new('ShaderNodeGroup')
     array_alpha.node_tree = diffuse_group
-    material.node_tree.links.new(array_alpha.outputs['Color'], mix_arrays.inputs['Color1'])
+    material.node_tree.links.new(array_alpha.outputs['Color'], mix_arrays.inputs['A'])
 
-    multiply_masks = material.node_tree.nodes.new('ShaderNodeMixRGB')
+    multiply_masks = new_mix_rgba(material.node_tree)
     multiply_masks.blend_type = 'MULTIPLY'
-    multiply_masks.inputs[0].default_value = 1  # Fac
-    material.node_tree.links.new(multiply_masks.outputs['Color'], mix_arrays.inputs['Fac'])
+    multiply_masks.inputs['Factor'].default_value = 1  # Fac
+    material.node_tree.links.new(multiply_masks.outputs['Result'], mix_arrays.inputs['Factor'])
 
-    separate_masks = material.node_tree.nodes.new('ShaderNodeSeparateRGB')
-    material.node_tree.links.new(separate_masks.outputs['R'], multiply_masks.inputs['Color1'])
-    material.node_tree.links.new(separate_masks.outputs['G'], multiply_masks.inputs['Color2'])
-    material.node_tree.links.new(separate_masks.outputs['B'], array_blue.inputs['Texture ID'])
+    separate_masks = new_separate_color(material.node_tree)
+    material.node_tree.links.new(separate_masks.outputs['Red'], multiply_masks.inputs['A'])
+    material.node_tree.links.new(separate_masks.outputs['Green'], multiply_masks.inputs['B'])
+    material.node_tree.links.new(separate_masks.outputs['Blue'], array_blue.inputs['Texture ID'])
 
     mask_map = material.node_tree.nodes.new('ShaderNodeTexImage')
     mask_path = context.directory + "\\" + context.filename_without_extension + "_terrain_textures\\" + tile_name + "\\merged_mask_map.tga"
     if exists(mask_path):
         mask_map.image = bpy.data.images.load(mask_path, check_existing=True)
         mask_map.image.colorspace_settings.name = 'Non-Color'
-    material.node_tree.links.new(mask_map.outputs['Color'], separate_masks.inputs['Image'])
+    material.node_tree.links.new(mask_map.outputs['Color'], separate_masks.inputs['Color'])
     material.node_tree.links.new(mask_map.outputs['Alpha'], array_alpha.inputs['Texture ID'])
 
     blur_group = _setup_blur_group()
@@ -270,35 +278,35 @@ def _setup_texture_splatting(context: TerrainImportContext, material: Material, 
     normal_map = material.node_tree.nodes.new('ShaderNodeNormalMap')
     material.node_tree.links.new(normal_map.outputs['Normal'], bsdf.inputs['Normal'])
 
-    separate_rgb = material.node_tree.nodes.new('ShaderNodeSeparateRGB')
-    combine_rgb = material.node_tree.nodes.new('ShaderNodeCombineRGB')
+    separate_rgb = new_separate_color(material.node_tree)
+    combine_rgb = new_combine_color(material.node_tree)
     less_than = material.node_tree.nodes.new('ShaderNodeMath')
     less_than.operation = 'LESS_THAN'
     less_than.inputs[1].default_value = 0.01
     maximum = material.node_tree.nodes.new('ShaderNodeMath')
     maximum.operation = 'MAXIMUM'
-    material.node_tree.links.new(combine_rgb.inputs['R'], separate_rgb.outputs['R'])
-    material.node_tree.links.new(combine_rgb.inputs['G'], separate_rgb.outputs['G'])
-    material.node_tree.links.new(normal_map.inputs['Color'], combine_rgb.outputs['Image'])
-    material.node_tree.links.new(less_than.inputs[0], separate_rgb.outputs['B'])
-    material.node_tree.links.new(maximum.inputs[0], separate_rgb.outputs['B'])
+    material.node_tree.links.new(combine_rgb.inputs['Red'], separate_rgb.outputs['Red'])
+    material.node_tree.links.new(combine_rgb.inputs['Green'], separate_rgb.outputs['Green'])
+    material.node_tree.links.new(normal_map.inputs['Color'], combine_rgb.outputs['Color'])
+    material.node_tree.links.new(less_than.inputs[0], separate_rgb.outputs['Blue'])
+    material.node_tree.links.new(maximum.inputs[0], separate_rgb.outputs['Blue'])
     material.node_tree.links.new(maximum.inputs[1], less_than.outputs['Value'])
-    material.node_tree.links.new(combine_rgb.inputs['B'], maximum.outputs['Value'])
+    material.node_tree.links.new(combine_rgb.inputs['Blue'], maximum.outputs['Value'])
 
-    mix_normal = material.node_tree.nodes.new('ShaderNodeMixRGB')
-    material.node_tree.links.new(mix_normal.outputs['Color'], separate_rgb.inputs['Image'])
+    mix_normal = new_mix_rgba(material.node_tree)
+    material.node_tree.links.new(mix_normal.outputs['Result'], separate_rgb.inputs['Color'])
 
     normal_group = _setup_texture_array_group(context, "Normal")
     blue_normal = material.node_tree.nodes.new('ShaderNodeGroup')
     blue_normal.node_tree = normal_group
-    material.node_tree.links.new(blue_normal.outputs['Color'], mix_normal.inputs['Color2'])
+    material.node_tree.links.new(blue_normal.outputs['Color'], mix_normal.inputs['B'])
 
     alpha_normal = material.node_tree.nodes.new('ShaderNodeGroup')
     alpha_normal.node_tree = normal_group
-    material.node_tree.links.new(alpha_normal.outputs['Color'], mix_normal.inputs['Color1'])
+    material.node_tree.links.new(alpha_normal.outputs['Color'], mix_normal.inputs['A'])
 
-    material.node_tree.links.new(multiply_masks.outputs['Color'], mix_normal.inputs['Fac'])
-    material.node_tree.links.new(separate_masks.outputs['B'], blue_normal.inputs['Texture ID'])
+    material.node_tree.links.new(multiply_masks.outputs['Result'], mix_normal.inputs['Factor'])
+    material.node_tree.links.new(separate_masks.outputs['Blue'], blue_normal.inputs['Texture ID'])
     material.node_tree.links.new(mask_map.outputs['Alpha'], alpha_normal.inputs['Texture ID'])
     material.node_tree.links.new(mapping.outputs['Vector'], blue_normal.inputs['Vector'])
     material.node_tree.links.new(mapping.outputs['Vector'], alpha_normal.inputs['Vector'])
@@ -307,20 +315,20 @@ def _setup_texture_splatting(context: TerrainImportContext, material: Material, 
     displacement = material.node_tree.nodes.new('ShaderNodeDisplacement')
     material.node_tree.links.new(displacement.outputs['Displacement'], output.inputs['Displacement'])
 
-    mix_displacement = material.node_tree.nodes.new('ShaderNodeMixRGB')
-    material.node_tree.links.new(mix_displacement.outputs['Color'], displacement.inputs['Height'])
+    mix_displacement = new_mix_rgba(material.node_tree)
+    material.node_tree.links.new(mix_displacement.outputs['Result'], displacement.inputs['Height'])
 
     displacement_group = _setup_texture_array_group(context, "Displacement")
     blue_displacement = material.node_tree.nodes.new('ShaderNodeGroup')
     blue_displacement.node_tree = displacement_group
-    material.node_tree.links.new(blue_displacement.outputs['Color'], mix_displacement.inputs['Color2'])
+    material.node_tree.links.new(blue_displacement.outputs['Color'], mix_displacement.inputs['B'])
 
     alpha_displacement = material.node_tree.nodes.new('ShaderNodeGroup')
     alpha_displacement.node_tree = displacement_group
-    material.node_tree.links.new(alpha_displacement.outputs['Color'], mix_displacement.inputs['Color1'])
+    material.node_tree.links.new(alpha_displacement.outputs['Color'], mix_displacement.inputs['A'])
 
-    material.node_tree.links.new(multiply_masks.outputs['Color'], mix_displacement.inputs['Fac'])
-    material.node_tree.links.new(separate_masks.outputs['B'], blue_displacement.inputs['Texture ID'])
+    material.node_tree.links.new(multiply_masks.outputs['Result'], mix_displacement.inputs['Factor'])
+    material.node_tree.links.new(separate_masks.outputs['Blue'], blue_displacement.inputs['Texture ID'])
     material.node_tree.links.new(mask_map.outputs['Alpha'], alpha_displacement.inputs['Texture ID'])
     material.node_tree.links.new(mapping.outputs['Vector'], blue_displacement.inputs['Vector'])
     material.node_tree.links.new(mapping.outputs['Vector'], alpha_displacement.inputs['Vector'])
@@ -334,30 +342,30 @@ def _setup_blur_group() -> NodeTree:
 
     group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
     group_inputs = group.nodes.new('NodeGroupInput')
-    group.inputs.new('NodeSocketFloat', "Blur Amount")
-    group.inputs.new('NodeSocketFloat', "Blur Quality")
+    node_group_add_input(group, "Blur Amount", 'NodeSocketFloat')
+    node_group_add_input(group, "Blur Quality", 'NodeSocketFloat')
 
     group_outputs = group.nodes.new('NodeGroupOutput')
-    group.outputs.new('NodeSocketColor', "Color")
+    node_group_add_output(group, "Color", 'NodeSocketColor')
 
-    add = group.nodes.new('ShaderNodeMixRGB')
+    add = new_mix_rgba(group)
     add.blend_type = 'ADD'
-    group.links.new(add.outputs['Color'], group_outputs.inputs['Color'])
+    group.links.new(add.outputs['Result'], group_outputs.inputs['Color'])
 
     uv_map = group.nodes.new('ShaderNodeUVMap')
     uv_map.uv_map = "map1"
-    group.links.new(uv_map.outputs['UV'], add.inputs['Color1'])
+    group.links.new(uv_map.outputs['UV'], add.inputs['A'])
 
-    subtract = group.nodes.new('ShaderNodeMixRGB')
+    subtract = new_mix_rgba(group)
     subtract.blend_type = 'SUBTRACT'
-    subtract.inputs[0].default_value = 1  # Fac
-    group.links.new(subtract.outputs['Color'], add.inputs['Color2'])
+    subtract.inputs['Factor'].default_value = 1  # Fac
+    group.links.new(subtract.outputs['Result'], add.inputs['B'])
 
     noise = group.nodes.new('ShaderNodeTexNoise')
     noise.inputs[3].default_value = 2.45  # Detail
-    group.links.new(noise.outputs['Color'], subtract.inputs['Color1'])
+    group.links.new(noise.outputs['Color'], subtract.inputs['A'])
 
-    group.links.new(group_inputs.outputs['Blur Amount'], add.inputs['Fac'])
+    group.links.new(group_inputs.outputs['Blur Amount'], add.inputs['Factor'])
     group.links.new(group_inputs.outputs['Blur Quality'], noise.inputs['Scale'])
 
     return group
@@ -373,11 +381,11 @@ def _setup_texture_array_group(context: TerrainImportContext, array_type: str) -
     group = bpy.data.node_groups.new("Terrain " + array_type + " Array", 'ShaderNodeTree')
 
     group_inputs = group.nodes.new('NodeGroupInput')
-    group.inputs.new('NodeSocketFloat', "Texture ID")
-    group.inputs.new('NodeSocketVector', "Vector")
+    node_group_add_input(group, "Texture ID", 'NodeSocketFloat')
+    node_group_add_input(group, "Vector", 'NodeSocketVector')
 
     group_outputs = group.nodes.new('NodeGroupOutput')
-    group.outputs.new('NodeSocketColor', "Color")
+    node_group_add_output(group, "Color", 'NodeSocketColor')
 
     base_texture = group.nodes.new('ShaderNodeTexImage')
     base_texture.image = bpy.data.images.load(directory + "\\11.tga", check_existing=True)
@@ -394,33 +402,33 @@ def _setup_texture_array_group(context: TerrainImportContext, array_type: str) -
         group.links.new(group_inputs.outputs['Vector'], texture.inputs['Vector'])
 
         if i == 25:
-            lighten = group.nodes.new('ShaderNodeMixRGB')
+            lighten = new_mix_rgba(group)
             lighten.blend_type = 'LIGHTEN'
-            group.links.new(lighten.outputs['Color'], group_outputs.inputs['Color'])
+            group.links.new(lighten.outputs['Result'], group_outputs.inputs['Color'])
             compare = group.nodes.new('ShaderNodeMath')
             compare.operation = 'COMPARE'
             compare.inputs[1].default_value = texture_array_map[-1][1]
             compare.inputs[2].default_value = texture_array_map[-1][2]
             group.links.new(group_inputs.outputs['Texture ID'], compare.inputs[0])
-            group.links.new(compare.outputs['Value'], lighten.inputs['Fac'])
-            group.links.new(texture.outputs['Color'], lighten.inputs['Color2'])
+            group.links.new(compare.outputs['Value'], lighten.inputs['Factor'])
+            group.links.new(texture.outputs['Color'], lighten.inputs['B'])
             prev_lighten = lighten
         else:
             values = [t for t in texture_array_map if t[0] == i]
             for value in values:
-                lighten = group.nodes.new('ShaderNodeMixRGB')
+                lighten = new_mix_rgba(group)
                 lighten.blend_type = 'LIGHTEN'
-                group.links.new(lighten.outputs['Color'], prev_lighten.inputs['Color1'])
+                group.links.new(lighten.outputs['Result'], prev_lighten.inputs['A'])
                 compare = group.nodes.new('ShaderNodeMath')
                 compare.operation = 'COMPARE'
                 compare.inputs[1].default_value = value[1]
                 compare.inputs[2].default_value = value[2]
                 group.links.new(group_inputs.outputs['Texture ID'], compare.inputs[0])
-                group.links.new(compare.outputs['Value'], lighten.inputs['Fac'])
-                group.links.new(texture.outputs['Color'], lighten.inputs['Color2'])
+                group.links.new(compare.outputs['Value'], lighten.inputs['Factor'])
+                group.links.new(texture.outputs['Color'], lighten.inputs['B'])
                 prev_lighten = lighten
 
         if i == 0:
-            group.links.new(base_texture.outputs['Color'], prev_lighten.inputs['Color1'])
+            group.links.new(base_texture.outputs['Color'], prev_lighten.inputs['A'])
 
     return group

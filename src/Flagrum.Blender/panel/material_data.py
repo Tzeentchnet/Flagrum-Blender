@@ -1,11 +1,11 @@
 from bpy.props import (
+    BoolProperty,
+    CollectionProperty,
     EnumProperty,
     FloatProperty,
     FloatVectorProperty,
+    IntProperty,
     StringProperty,
-    BoolProperty,
-    CollectionProperty,
-    IntProperty
 )
 from bpy.types import PropertyGroup
 

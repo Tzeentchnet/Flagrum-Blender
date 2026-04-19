@@ -20,10 +20,10 @@ class GmdlMeshObject:
 
         cluster_count = reader.read()
         self.clusters = []
-        for i in range(cluster_count):
+        for _i in range(cluster_count):
             self.clusters.append(reader.read())
 
         mesh_count = reader.read()
         self.meshes = []
-        for i in range(mesh_count):
+        for _i in range(mesh_count):
             self.meshes.append(GmdlMesh(reader, version))

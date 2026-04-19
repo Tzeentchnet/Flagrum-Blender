@@ -1,6 +1,7 @@
-﻿import bpy
-from bpy.types import Panel, Operator, Mesh
+import bpy
+from bpy.types import Mesh, Operator, Panel
 
+from ..utilities.bpy_context import set_object_mode
 from .material_data import material_weight_limit
 
 
@@ -130,13 +131,13 @@ class DeleteUnusedBonesOperator(Operator):
                     bones_to_keep.append(mesh.vertex_groups[index].name)
 
         current_mode = context.object.mode
-        bpy.ops.object.mode_set(mode='EDIT')
+        set_object_mode(armature, 'EDIT')
 
         for bone in armature.data.edit_bones:
             if bone.name not in bones_to_keep:
                 armature.data.edit_bones.remove(bone)
 
-        bpy.ops.object.mode_set(mode=current_mode)
+        set_object_mode(armature, current_mode)
 
         return {'FINISHED'}
 

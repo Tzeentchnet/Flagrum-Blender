@@ -1,13 +1,13 @@
 ﻿import struct
 from dataclasses import dataclass
 
+from ..gfxbinheader import GfxbinHeader
 from .buffer import Buffer
 from .sampler import Sampler
 from .shaderbinary import ShaderBinary
 from .shaderprogram import ShaderProgram
 from .texture import Texture
 from .uniform import Uniform
-from ..gfxbinheader import GfxbinHeader
 
 
 @dataclass
@@ -79,27 +79,27 @@ class Gmtl:
         self.htpk_uri_offset = reader.read()
 
         self.uniforms = []
-        for i in range(self.total_uniform_count):
+        for _ in range(self.total_uniform_count):
             self.uniforms.append(Uniform(reader))
 
         self.buffers = []
-        for i in range(self.total_buffer_count):
+        for _ in range(self.total_buffer_count):
             self.buffers.append(Buffer(reader))
 
         self.textures = []
-        for i in range(self.total_texture_count):
+        for _ in range(self.total_texture_count):
             self.textures.append(Texture(reader))
 
         self.samplers = []
-        for i in range(self.total_sampler_count):
+        for _ in range(self.total_sampler_count):
             self.samplers.append(Sampler(reader))
 
         self.shader_binaries = []
-        for i in range(self.shader_binary_count):
+        for _ in range(self.shader_binary_count):
             self.shader_binaries.append(ShaderBinary(reader))
 
         self.shader_programs = []
-        for i in range(self.shader_program_count):
+        for _ in range(self.shader_program_count):
             self.shader_programs.append(ShaderProgram(reader))
 
         self.gpubin = reader.read()
@@ -124,7 +124,7 @@ class Gmtl:
 
     def _unpack_values(self, offset: int, size: int):
         result = []
-        for i in range(int(size / 4)):
+        for _i in range(int(size / 4)):
             result.append(struct.unpack_from("<f", self.gpubin, offset)[0])
 
         return result

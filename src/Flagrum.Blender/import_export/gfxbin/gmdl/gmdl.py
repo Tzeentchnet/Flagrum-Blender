@@ -1,10 +1,10 @@
 ﻿from dataclasses import dataclass
 
+from ..gfxbinheader import GfxbinHeader
 from .gmdlbone import GmdlBone
 from .gmdlmeshobject import GmdlMeshObject
 from .gmdlmodelpart import GmdlModelPart
 from .gmdlnode import GmdlNode
-from ..gfxbinheader import GfxbinHeader
 
 
 @dataclass
@@ -46,7 +46,7 @@ class Gmdl:
 
         bone_count = reader.read()
         self.bones = []
-        for i in range(bone_count):
+        for _ in range(bone_count):
             self.bones.append(GmdlBone(reader, self.header.version))
 
         node_count = reader.read()
@@ -61,7 +61,7 @@ class Gmdl:
             self.gpubin_count = 1
 
         self.gpubin_hashes = []
-        for i in range(self.gpubin_count):
+        for _ in range(self.gpubin_count):
             self.gpubin_hashes.append(reader.read())
 
         mesh_object_count = reader.read()
@@ -74,7 +74,7 @@ class Gmdl:
 
         parts_count = reader.read()
         self.parts = []
-        for i in range(parts_count):
+        for _ in range(parts_count):
             self.parts.append(GmdlModelPart(reader))
 
         if self.header.version >= 20220707:
@@ -86,5 +86,5 @@ class Gmdl:
 
             self.gpubin_size_count = reader.read()
             self.gpubin_sizes = []
-            for i in range(self.gpubin_size_count):
+            for _ in range(self.gpubin_size_count):
                 self.gpubin_sizes.append(reader.read())

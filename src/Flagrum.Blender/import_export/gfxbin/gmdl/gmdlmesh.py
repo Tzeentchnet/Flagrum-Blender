@@ -55,7 +55,7 @@ class GmdlMesh:
             self.unknown = reader.read()
             bone_id_count = reader.read()
             self.bone_ids = []
-            for i in range(bone_id_count):
+            for _i in range(bone_id_count):
                 self.bone_ids.append(reader.read())
 
         self.vertex_layout_type = reader.read()
@@ -90,7 +90,7 @@ class GmdlMesh:
 
         vertex_stream_count = reader.read()
         self.vertex_streams = []
-        for i in range(vertex_stream_count):
+        for _i in range(vertex_stream_count):
             self.vertex_streams.append(GmdlVertexStream(reader))
 
         self.vertex_buffer_offset = reader.read()
@@ -101,7 +101,7 @@ class GmdlMesh:
 
         self.subgeometry_count = reader.read()
         self.subgeometries = []
-        for i in range(self.subgeometry_count):
+        for _i in range(self.subgeometry_count):
             self.subgeometries.append(GmdlSubgeometry(reader))
 
         if version >= 20220707:
@@ -124,7 +124,7 @@ class GmdlMesh:
         self.parts_id = reader.read()
         parts_count = reader.read()
         self.parts = []
-        for i in range(parts_count):
+        for _i in range(parts_count):
             self.parts.append(GmdlMeshPart(reader))
 
         self.unknown9 = reader.read()

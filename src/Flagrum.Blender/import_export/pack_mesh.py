@@ -1,10 +1,12 @@
-﻿import bmesh
+import bmesh
 import bpy
-from bpy.types import Object, Mesh
+from bpy.types import Mesh, Object
 from mathutils import Matrix, Vector
 
-from ..entities import Gpubin, UV, Vector3, MeshData, UVMap, ColorMap, Color4, Normal, MaterialData
+from ..entities import UV, Color4, ColorMap, Gpubin, MaterialData, MeshData, Normal, UVMap, Vector3
 from ..panel.material_data import material_weight_limit
+from ..utilities.blender_compat import apply_custom_split_normals
+from ..utilities.bpy_context import set_object_mode
 
 # Matrix that converts the axes back to FBX coordinate system
 conversion_matrix = Matrix([
@@ -45,7 +47,7 @@ def pack_mesh(preserve_normals: bool):
             for vertex in mesh_copy.data.vertices:
                 vertex.select = True
 
-            bpy.ops.object.mode_set(mode='EDIT')
+            set_object_mode(mesh_copy, 'EDIT')
             bmesh_copy = bmesh.from_edit_mesh(mesh_copy.data)
 
             # Clear seams as we need to use them for splitting
@@ -73,12 +75,12 @@ def pack_mesh(preserve_normals: bool):
 
             # Apply the changes to the cloned mesh
             bmesh.update_edit_mesh(mesh_copy.data)
-            bpy.ops.object.mode_set(mode='OBJECT')
+            set_object_mode(mesh_copy, 'OBJECT')
 
             # Have set this as an export option as it can mess up normals on double-sided meshes
             if preserve_normals:
                 # Apply correct normals from original to fix issues from edge-splitting
-                mesh_copy.data.use_auto_smooth = True
+                mesh_copy.data.polygons.foreach_set("use_smooth", [True] * len(mesh_copy.data.polygons))
                 modifier = mesh_copy.modifiers.new(name="custom_normals_correction_" + mesh_copy.name,
                                                    type='DATA_TRANSFER')
                 modifier.use_loop_data = True
@@ -113,13 +115,12 @@ def _pack_normals_and_tangents(mesh: Object):
     tangents: list[Normal] = []
 
     if not mesh_data.has_custom_normals:
-        mesh_data.use_auto_smooth = True
-        mesh_data.normals_split_custom_set_from_vertices([vertex.normal for vertex in mesh_data.vertices])
+        apply_custom_split_normals(mesh_data, [vertex.normal for vertex in mesh_data.vertices])
 
     try:
         mesh_data.calc_tangents()
-    except:
-        pass
+    except Exception as ex:
+        print(f"[Flagrum] calc_tangents failed: {ex}")
 
     normals_dict = {}
     tangents_dict = {}

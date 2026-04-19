@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import bpy
 from bpy.types import Material
 
+from ..utilities.import_collections import RootCollections, build_root_collections
 from .gfxbin.gfxbinheader import GfxbinHeader
 
 
@@ -14,7 +15,9 @@ class ImportContext:
     import_vems: bool
     path_without_extension: str
     amdl_path: str
+    model_name: str
     collection: bpy.types.Collection
+    root_collections: RootCollections
     materials: dict[str, Material]
     texture_slots: dict[str, bool]
     base_directory: str
@@ -42,7 +45,9 @@ class ImportContext:
                     group_name += "."
                 group_name += string
 
+        self.model_name = group_name
         self.collection = bpy.data.collections.new(group_name)
+        self.root_collections = build_root_collections(group_name, self.collection)
 
     def set_base_directory(self, header: GfxbinHeader):
         # Get the URI of the first gpubin

@@ -1,0 +1,40 @@
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = [
+    "modules",          # frozen upstream snapshot — do not lint
+    "**/__pycache__",
+]
+
+[tool.ruff.lint]
+# Default rules are conservative; the addon is mostly bpy glue, so we add
+# pyflakes (F), pycodestyle (E/W), import sorting (I), and a couple of
+# bugbear-flavoured checks but nothing that fights against bpy's
+# operator-style ALL_CAPS class attributes or the deferred-property idiom.
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+]
+ignore = [
+    "E402", # module-level import not at top — bpy ordering forces this in some panels
+    "E501", # line-length is enforced via formatter, not linter
+    "E741", # ambiguous variable name (l, I) — bpy idioms use these
+    "B008", # function call in default arg — bpy.props.*Property() is exactly this
+    "B905", # zip() without strict — Python 3.13 default is fine
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Re-exports and registration tables intentionally import-without-use.
+"src/Flagrum.Blender/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["Flagrum.Blender"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

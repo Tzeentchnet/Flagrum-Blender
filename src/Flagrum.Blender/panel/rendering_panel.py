@@ -1,5 +1,7 @@
-﻿import bpy
-from bpy.types import Panel, Operator
+import bpy
+from bpy.types import Operator, Panel
+
+from ..utilities.blender_compat import is_principled_socket, principled_input
 
 
 class ToggleEmissionOperator(Operator):
@@ -13,7 +15,7 @@ class ToggleEmissionOperator(Operator):
                 bsdf = material.node_tree.nodes["Principled BSDF"]
                 emission_link = None
                 for link in material.node_tree.links:
-                    if link.to_node.type == 'BSDF_PRINCIPLED' and link.to_socket.name == "Emission":
+                    if link.to_node.type == 'BSDF_PRINCIPLED' and is_principled_socket(link.to_socket, 'emission'):
                         emission_link = link
                         break
 
@@ -24,7 +26,7 @@ class ToggleEmissionOperator(Operator):
                             emission_texture = node
                             break
                     if emission_texture is not None:
-                        material.node_tree.links.new(bsdf.inputs['Emission'], emission_texture.outputs['Color'])
+                        material.node_tree.links.new(principled_input(bsdf, 'emission'), emission_texture.outputs['Color'])
                 else:
                     emission_link.from_node["was_emission"] = True
                     material.node_tree.links.remove(emission_link)
@@ -32,7 +34,7 @@ class ToggleEmissionOperator(Operator):
                 # This is needed to force the material to update in the viewport
                 # Basically just need some kind of change that triggers an update since the
                 # Emission texture connection/disconnection doesn't do it
-                bsdf.inputs['Specular'].default_value = 0.5
+                principled_input(bsdf, 'specular').default_value = 0.5
 
         return {'FINISHED'}
 
@@ -46,7 +48,7 @@ class SetEmissionOperator(Operator):
         for material in bpy.data.materials:
             if material.node_tree is not None:
                 bsdf = material.node_tree.nodes["Principled BSDF"]
-                bsdf.inputs[20].default_value = context.window_manager.flagrum_globals.emission_strength
+                principled_input(bsdf, 'emission_strength').default_value = context.window_manager.flagrum_globals.emission_strength
 
         return {'FINISHED'}
 

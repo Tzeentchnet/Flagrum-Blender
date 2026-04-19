@@ -128,7 +128,7 @@ class MessagePackReader:
     def read_map(self, size):
         result = {}
 
-        for a in range(size):
+        for _a in range(size):
             uri_hash = self.read()
             uri = self.read()
             result[uri_hash] = uri

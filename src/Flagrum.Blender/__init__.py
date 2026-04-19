@@ -1,79 +1,51 @@
 import bpy
-from bpy.props import PointerProperty, BoolProperty, IntProperty
-from bpy.types import AddonPreferences
+from bpy.props import PointerProperty
 from bpy.utils import register_class, unregister_class
 
-from . import addon_updater_ops
 from .globals import FlagrumGlobals
-from .import_export.menu import ImportOperator, ExportOperator, ImportEnvironmentOperator, FlagrumImportMenu, \
-    ImportTerrainOperator
-from .panel.cleanup_panel import CleanupPanel, DeleteUnusedBonesOperator, DeleteUnusedVGroupsOperator, \
-    NormaliseWeightsOperator
-from .panel.material_data import MaterialSettings, FlagrumMaterialProperty, FlagrumMaterialPropertyCollection
-from .panel.material_panel import MaterialEditorPanel, MaterialResetOperator, TextureSlotOperator, \
-    ClearTextureOperator, MaterialImportOperator, MaterialCopyOperator, MaterialPasteOperator
-from .panel.normals_panel import UseCustomNormalsOperator, NormalsPanel, SplitEdgesOperator
-from .panel.parts_panel import PartsSettings, PartsSystemPanel, PartsVertex, PartsGroup, AddPartsGroupOperator, \
-    PartsGroupsList, RemovePartsGroupOperator, SelectPartsGroupOperator, DeselectPartsGroupOperator, \
-    AssignPartsGroupOperator, UnassignPartsGroupOperator
-from .panel.rendering_panel import ToggleEmissionOperator, RenderingPanel, SetEmissionOperator
+from .import_export.menu import (
+    ExportOperator,
+    FlagrumImportMenu,
+    ImportEnvironmentOperator,
+    ImportOperator,
+    ImportTerrainOperator,
+)
+from .panel.cleanup_panel import (
+    CleanupPanel,
+    DeleteUnusedBonesOperator,
+    DeleteUnusedVGroupsOperator,
+    NormaliseWeightsOperator,
+)
+from .panel.material_data import FlagrumMaterialProperty, FlagrumMaterialPropertyCollection, MaterialSettings
+from .panel.material_panel import (
+    ClearTextureOperator,
+    MaterialCopyOperator,
+    MaterialEditorPanel,
+    MaterialImportOperator,
+    MaterialPasteOperator,
+    MaterialResetOperator,
+    TextureSlotOperator,
+)
+from .panel.normals_panel import NormalsPanel, SplitEdgesOperator, UseCustomNormalsOperator
+from .panel.parts_panel import (
+    AddPartsGroupOperator,
+    AssignPartsGroupOperator,
+    DeselectPartsGroupOperator,
+    PartsGroup,
+    PartsGroupsList,
+    PartsSettings,
+    PartsSystemPanel,
+    PartsVertex,
+    RemovePartsGroupOperator,
+    SelectPartsGroupOperator,
+    UnassignPartsGroupOperator,
+)
+from .panel.rendering_panel import RenderingPanel, SetEmissionOperator, ToggleEmissionOperator
 
-bl_info = {
-    "name": "Flagrum",
-    "version": (1, 3, 0),
-    "blender": (3, 0, 0),
-    "location": "File > Import-Export",
-    "description": "Blender add-on for Flagrum",
-    "category": "Import-Export",
-}
-
-
-@addon_updater_ops.make_annotations
-class FlagrumPreferences(AddonPreferences):
-    bl_idname = __package__
-
-    auto_check_update = BoolProperty(
-        name="Auto-check for Update",
-        description="If enabled, auto-check for updates using an interval",
-        default=True,
-    )
-
-    updater_interval_months = IntProperty(
-        name='Months',
-        description="Number of months between checking for updates",
-        default=0,
-        min=0
-    )
-
-    updater_interval_days = IntProperty(
-        name='Days',
-        description="Number of days between checking for updates",
-        default=0,
-        min=0,
-    )
-
-    updater_interval_hours = IntProperty(
-        name='Hours',
-        description="Number of hours between checking for updates",
-        default=1,
-        min=0,
-        max=23
-    )
-
-    updater_interval_minutes = IntProperty(
-        name='Minutes',
-        description="Number of minutes between checking for updates",
-        default=0,
-        min=0,
-        max=59
-    )
-
-    def draw(self, context):
-        addon_updater_ops.update_settings_ui(self, context)
-
+# NOTE: ``bl_info`` is intentionally absent. Packaging metadata lives in
+# ``blender_manifest.toml`` (Blender Extensions Platform, 4.2+).
 
 classes = (
-    FlagrumPreferences,
     ImportOperator,
     ExportOperator,
     ImportEnvironmentOperator,
@@ -110,7 +82,7 @@ classes = (
     UnassignPartsGroupOperator,
     SelectPartsGroupOperator,
     DeselectPartsGroupOperator,
-    PartsSystemPanel
+    PartsSystemPanel,
 )
 
 
@@ -119,12 +91,10 @@ def import_menu_item(self, context):
 
 
 def export_menu_item(self, context):
-    self.layout.operator(ExportOperator.bl_idname,
-                         text="Flagrum (.fmd)")
+    self.layout.operator(ExportOperator.bl_idname, text="Flagrum (.fmd)")
 
 
 def register():
-    addon_updater_ops.register(bl_info)
     for cls in classes:
         register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(import_menu_item)
@@ -138,12 +108,12 @@ def register():
 def unregister():
     del bpy.types.WindowManager.flagrum_globals
     del bpy.types.WindowManager.flagrum_material_clipboard
+    del bpy.types.Object.flagrum_parts
     del bpy.types.Object.flagrum_material
-    bpy.types.TOPBAR_MT_file_import.remove(export_menu_item)
+    bpy.types.TOPBAR_MT_file_export.remove(export_menu_item)
     bpy.types.TOPBAR_MT_file_import.remove(import_menu_item)
     for cls in reversed(classes):
         unregister_class(cls)
-    addon_updater_ops.unregister()
 
 
 if __name__ == "__main__":

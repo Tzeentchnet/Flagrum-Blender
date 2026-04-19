@@ -13,5 +13,5 @@ class GfxbinHeader:
 
         hash_count = reader.read()
         self.hashes = []
-        for i in range(hash_count):
+        for _i in range(hash_count):
             self.hashes.append(reader.read())

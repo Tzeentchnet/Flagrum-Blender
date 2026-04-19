@@ -1,6 +1,7 @@
-import numpy
 import os
 import struct
+
+import numpy
 from mathutils import Matrix
 
 from ..entities import ArmatureData, BoneData
@@ -35,15 +36,16 @@ def _read_armature_data(amdl_file):
     struct.unpack("<L", amdl_file.read(4))[0]  # Skip the block2 offset
 
     offset_flag = struct.unpack("<L", amdl_file.read(4))[0]
-    offset = relative_offsets[offset_flag]
+    # offset = relative_offsets[offset_flag]  # currently unused
+    _ = offset_flag
 
     if is_duscae:
         amdl_file.seek(840, 0)
     else:
         amdl_file.seek(296, 0)
 
-    offset_to_end_of_names = struct.unpack(
-        "<L", amdl_file.read(4))[0] + offset
+    # Read offset_to_end_of_names (unused, kept to advance file position)
+    amdl_file.read(4)
 
     amdl_file.seek(156, 1)
 
@@ -76,7 +78,7 @@ def _read_armature_data(amdl_file):
         parent_count = trans_header["count_1"]
 
     parent_IDs_start = amdl_file.tell()
-    for p in range(parent_count):  # block 3  uint16
+    for _ in range(parent_count):  # block 3  uint16
         id = struct.unpack("<H", amdl_file.read(2))[0]
         if id == 65535:
             continue  # excluded in parentID_count
@@ -110,7 +112,7 @@ def _read_armature_data(amdl_file):
     else:
         name_count = bone_count
 
-    for i in range(name_count):
+    for _ in range(name_count):
         bone_name = _read_string(amdl_file)
         bone_names.append(bone_name)
         sc = len(bone_name) + 1
@@ -168,7 +170,8 @@ def _read_armature_header(amdl_file, is_duscae):
         ab["parentID_count"] = struct.unpack("<H", amdl_file.read(2))[0]
         if ab["parentID_count"] == 0:
             ab["parentID_count"] = ab["xfrm_count"]
-        unk_count = struct.unpack("<L", amdl_file.read(4))[0]
+        # Unknown 4-byte count (read to advance file position)
+        amdl_file.read(4)
         ab["start_offset"] = amdl_file.tell()
     return ab
 
@@ -192,7 +195,7 @@ def _align(ptr, alignment):
 def _is_amdl_from_episode_duscae(amdl_file):
     is_episode_duscae = True
     amdl_file.seek(160, 0)
-    for x in range(112):
+    for _x in range(112):
         if struct.unpack("<L", amdl_file.read(4))[0] != 0:
             is_episode_duscae = False
             break

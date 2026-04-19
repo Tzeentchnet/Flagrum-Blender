@@ -1,8 +1,20 @@
-﻿import bmesh
+import bmesh
 import bpy
-import bpy.path
-from bpy.props import IntProperty, StringProperty, CollectionProperty
-from bpy.types import Panel, PropertyGroup, Operator, UIList, Mesh, MeshVertex, Attribute, AttributeGroup
+from bpy.props import CollectionProperty, IntProperty, StringProperty
+from bpy.types import (
+    AnyType,
+    Attribute,
+    Context,
+    Mesh,
+    MeshVertex,
+    Operator,
+    Panel,
+    PropertyGroup,
+    UILayout,
+    UIList,
+)
+
+from ..utilities.bpy_context import set_object_mode
 
 
 class PartsVertex(PropertyGroup):
@@ -43,7 +55,7 @@ class RemovePartsGroupOperator(Operator):
     def execute(self, context):
         active_object = context.view_layer.objects.active
         parts: PartsSettings = active_object.flagrum_parts
-        attributes: AttributeGroup = active_object.data.attributes
+        attributes = active_object.data.attributes
         attributes.remove(attributes[parts.active_parts_group])
         return {'FINISHED'}
 
@@ -55,7 +67,8 @@ class AssignPartsGroupOperator(Operator):
     def execute(self, context):
         # Must do this in object mode or the parts attributes will be empty
         face_layers = {}
-        bpy.ops.object.mode_set(mode='OBJECT')
+        active_object = context.view_layer.objects.active
+        set_object_mode(active_object, 'OBJECT')
         parts: PartsSettings = context.view_layer.objects.active.flagrum_parts
         active_mesh: Mesh = context.view_layer.objects.active.data
 
@@ -67,7 +80,7 @@ class AssignPartsGroupOperator(Operator):
                 layer.data.foreach_get("value", faces)
                 face_layers[i] = faces
 
-        bpy.ops.object.mode_set(mode='EDIT')
+        set_object_mode(active_object, 'EDIT')
         bm = bmesh.from_edit_mesh(active_mesh)
         bm.faces.ensure_lookup_table()
 
@@ -79,12 +92,12 @@ class AssignPartsGroupOperator(Operator):
                     if face.select:
                         face_layers[key][i] = key == parts.active_parts_group
 
-        bpy.ops.object.mode_set(mode='OBJECT')
+        set_object_mode(active_object, 'OBJECT')
         for key in face_layers:
             layer = active_mesh.attributes[key]
             layer.data.foreach_set("value", face_layers[key])
 
-        bpy.ops.object.mode_set(mode='EDIT')
+        set_object_mode(active_object, 'EDIT')
 
         return {'FINISHED'}
 
@@ -95,7 +108,8 @@ class UnassignPartsGroupOperator(Operator):
 
     def execute(self, context):
         # Must do this in object mode or the parts attributes will be empty
-        bpy.ops.object.mode_set(mode='OBJECT')
+        active_object = context.view_layer.objects.active
+        set_object_mode(active_object, 'OBJECT')
         parts: PartsSettings = context.view_layer.objects.active.flagrum_parts
         active_mesh: Mesh = context.view_layer.objects.active.data
         layer = active_mesh.attributes[parts.active_parts_group]
@@ -103,7 +117,7 @@ class UnassignPartsGroupOperator(Operator):
         faces = [False] * len(active_mesh.polygons)
         layer.data.foreach_get("value", faces)
 
-        bpy.ops.object.mode_set(mode='EDIT')
+        set_object_mode(active_object, 'EDIT')
         bm = bmesh.from_edit_mesh(active_mesh)
         bm.faces.ensure_lookup_table()
 
@@ -112,10 +126,10 @@ class UnassignPartsGroupOperator(Operator):
             if face.select:
                 faces[i] = False
 
-        bpy.ops.object.mode_set(mode='OBJECT')
+        set_object_mode(active_object, 'OBJECT')
         layer = active_mesh.attributes[parts.active_parts_group]
         layer.data.foreach_set("value", faces)
-        bpy.ops.object.mode_set(mode='EDIT')
+        set_object_mode(active_object, 'EDIT')
 
         return {'FINISHED'}
 
@@ -126,14 +140,15 @@ class SelectPartsGroupOperator(Operator):
 
     def execute(self, context):
         # Must do this in object mode or the parts attributes will be empty
-        bpy.ops.object.mode_set(mode='OBJECT')
+        active_object = context.view_layer.objects.active
+        set_object_mode(active_object, 'OBJECT')
         parts: PartsSettings = context.view_layer.objects.active.flagrum_parts
         active_mesh: Mesh = context.view_layer.objects.active.data
         parts_layer = active_mesh.attributes[parts.active_parts_group]
         faces = [False] * len(active_mesh.polygons)
         parts_layer.data.foreach_get("value", faces)
 
-        bpy.ops.object.mode_set(mode='EDIT')
+        set_object_mode(active_object, 'EDIT')
         bm = bmesh.from_edit_mesh(active_mesh)
         bm.faces.ensure_lookup_table()
 
@@ -152,14 +167,15 @@ class DeselectPartsGroupOperator(Operator):
 
     def execute(self, context):
         # Must do this in object mode or the parts attributes will be empty
-        bpy.ops.object.mode_set(mode='OBJECT')
+        active_object = context.view_layer.objects.active
+        set_object_mode(active_object, 'OBJECT')
         parts: PartsSettings = context.view_layer.objects.active.flagrum_parts
         active_mesh: Mesh = context.view_layer.objects.active.data
         parts_layer = active_mesh.attributes[parts.active_parts_group]
         faces = [False] * len(active_mesh.polygons)
         parts_layer.data.foreach_get("value", faces)
 
-        bpy.ops.object.mode_set(mode='EDIT')
+        set_object_mode(active_object, 'EDIT')
         bm = bmesh.from_edit_mesh(active_mesh)
         bm.faces.ensure_lookup_table()
 
@@ -177,12 +193,12 @@ class PartsGroupsList(UIList):
     bl_idname = "OBJECT_UL_flagrum_parts_groups_list"
 
     def draw_item(self,
-                  context: 'Context',
-                  layout: 'UILayout',
-                  data: 'AnyType',
+                  context: Context,
+                  layout: UILayout,
+                  data: AnyType,
                   item: Attribute,
                   icon: int,
-                  active_data: 'AnyType',
+                  active_data: AnyType,
                   active_property: str,
                   index: int = 0,
                   flt_flag: int = 0):

@@ -19,5 +19,5 @@ class GmdlVertexStream:
 
         element_count = reader.read()
         self.elements = []
-        for i in range(element_count):
+        for _i in range(element_count):
             self.elements.append(GmdlVertexElement(reader))

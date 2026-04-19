@@ -1,0 +1,35 @@
+schema_version = "1.0.0"
+
+id = "flagrum"
+version = "2.0.0"
+name = "Flagrum"
+tagline = "Import Final Fantasy XV models, materials, and terrain"
+maintainer = "Flagrum contributors"
+type = "add-on"
+
+website = "https://github.com/Kizari/Flagrum"
+tags = ["Import-Export"]
+
+blender_version_min = "5.0.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+# All filesystem reads/writes (model imports, texture loads, .fmd export)
+# happen against user-selected paths via standard Blender file-pickers.
+permissions = {"files" = "Import and export FFXV assets from the local filesystem"}
+
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  "*.pyc",
+  ".git/",
+  ".gitignore",
+  "venv/",
+  ".vscode/",
+  ".idea/",
+  "addon_updater.py",
+  "addon_updater_ops.py",
+]
+

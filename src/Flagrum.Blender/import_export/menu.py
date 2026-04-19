@@ -4,20 +4,21 @@ import os
 from types import SimpleNamespace
 
 import bpy
-from bpy.props import StringProperty, EnumProperty, BoolProperty
-from bpy.types import Operator, Menu, Mesh
-from bpy_extras.io_utils import ImportHelper, ExportHelper
-from mathutils import Matrix, Euler, Vector
+from bpy.props import BoolProperty, EnumProperty, StringProperty
+from bpy.types import Menu, Mesh, Operator
+from bpy_extras.io_utils import ExportHelper, ImportHelper
+from mathutils import Euler, Matrix, Vector
 
+from ..entities import EnvironmentModelMetadata, Gpubin, TerrainImportContext, TerrainMetadata
+from ..helpers import draw_lines
 from .generate_armature import generate_armature
+from .generate_mesh import generate_mesh
 from .generate_terrain import generate_terrain
 from .gmdlimporter import GmdlImporter
 from .import_context import ImportContext
 from .interop import Interop
 from .pack_mesh import pack_mesh
 from .read_armature_data import import_armature_data
-from ..entities import EnvironmentModelMetadata, Gpubin, TerrainMetadata, TerrainImportContext
-from ..helpers import draw_lines
 
 
 class ImportOperator(Operator, ImportHelper):
@@ -107,7 +108,7 @@ class ImportEnvironmentOperator(Operator, ImportHelper):
         filename_without_extension = environment_path.split("\\")[-1].replace(".fed", "")
         context = ImportContext(environment_path)
 
-        import_file = open(environment_path, mode='r')
+        import_file = open(environment_path)
         import_data = import_file.read()
 
         data: list[EnvironmentModelMetadata] = json.loads(import_data, object_hook=lambda d: SimpleNamespace(**d))
@@ -130,11 +131,11 @@ class ImportEnvironmentOperator(Operator, ImportHelper):
             else:
                 try:
                     path = directory + "\\" + filename_without_extension + "_models\\" + str(model.Index) + ".json"
-                    mesh_file = open(path, mode='r')
+                    mesh_file = open(path)
                     mesh_file_data = mesh_file.read()
                     mesh_data: Gpubin = json.loads(mesh_file_data, object_hook=lambda d: SimpleNamespace(**d))
-                except:
-                    print("Failed to load " + model.Path)
+                except Exception as ex:
+                    print(f"Failed to load {model.Path}: {ex}")
 
                 if mesh_data is not None:
                     self.import_mesh(context, mesh_data, model, meshes)
@@ -257,7 +258,7 @@ class ImportTerrainOperator(Operator, ImportHelper):
         terrain_path = self.filepath
         directory = os.path.dirname(terrain_path)
         filename_without_extension = terrain_path.split("\\")[-1].replace(".ftd", "")
-        import_file = open(terrain_path, mode='r')
+        import_file = open(terrain_path)
         import_data = import_file.read()
         data: list[TerrainMetadata] = json.loads(import_data, object_hook=lambda d: SimpleNamespace(**d))
         context = TerrainImportContext(directory, filename_without_extension, self.mesh_resolution,

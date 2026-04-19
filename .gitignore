@@ -351,3 +351,21 @@ MigrationBackup/
 
 # Item ID Fixer project which is of little importance
 ItemIdFixer/
+# ---------------------------------------------------------------
+# Python / Blender add-on build (added 2026-04-18, Phase 5 cleanup)
+# ---------------------------------------------------------------
+*.pyo
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# JetBrains IDEs (Rider/PyCharm/IntelliJ)
+.idea/
+
+# Build artifacts (Blender Extension zips land in dist/)
+dist/
+build/
+flagrum-*.zip

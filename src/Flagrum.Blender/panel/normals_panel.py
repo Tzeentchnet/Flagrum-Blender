@@ -1,8 +1,11 @@
-﻿from array import array
+from array import array
 
 import bmesh
 import bpy
-from bpy.types import Panel, Operator, Mesh
+from bpy.types import Mesh, Operator, Panel
+
+from ..utilities.blender_compat import apply_custom_split_normals
+from ..utilities.bpy_context import set_object_mode
 
 
 class UseCustomNormalsOperator(Operator):
@@ -19,13 +22,12 @@ class UseCustomNormalsOperator(Operator):
     def execute(self, context):
         for mesh_object in context.view_layer.objects.selected:
             mesh: Mesh = mesh_object.data
-            mesh.use_auto_smooth = True
-            mesh.normals_split_custom_set_from_vertices([vert.normal for vert in mesh.vertices])
+            apply_custom_split_normals(mesh, [vert.normal for vert in mesh.vertices])
 
             try:
                 mesh.calc_tangents()
-            except:
-                pass
+            except Exception as ex:
+                print(f"[Flagrum] calc_tangents failed: {ex}")
 
             normals = {}
             tangents = {}
@@ -47,8 +49,7 @@ class UseCustomNormalsOperator(Operator):
             for i in range(len(normals)):
                 final_normals.append(normals[i][0])
 
-            mesh.normals_split_custom_set_from_vertices(final_normals)
-            mesh.use_auto_smooth = True
+            apply_custom_split_normals(mesh, final_normals)
 
             return {'FINISHED'}
 
@@ -73,7 +74,7 @@ class SplitEdgesOperator(Operator):
                 for vertex in obj.data.vertices:
                     vertex.select = True
 
-                bpy.ops.object.mode_set(mode='EDIT')
+                set_object_mode(obj, 'EDIT')
                 bmesh_copy = bmesh.from_edit_mesh(obj.data)
 
                 # Clear seams as we need to use them for splitting
@@ -95,7 +96,7 @@ class SplitEdgesOperator(Operator):
 
                 # Apply the changes to the mesh
                 bmesh.update_edit_mesh(obj.data)
-                bpy.ops.object.mode_set(mode='OBJECT')
+                set_object_mode(obj, 'OBJECT')
 
         return {'FINISHED'}
 
