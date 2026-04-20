@@ -31,12 +31,6 @@ class ImportContext:
         self.materials = {}
         self.texture_slots = {}
 
-        path_name = os.path.dirname(gfxbin_file_path)
-        p0 = os.path.split(path_name)
-        p1 = p0[0]
-        f_idx = p1.rfind("\\")
-        self.amdl_path = p1 + "\\" + p1[f_idx + 1 :] + ".amdl"
-
         file_name = gfxbin_file_path.split("\\")[-1]
         group_name = ""
         for string in file_name.split("."):
@@ -48,6 +42,55 @@ class ImportContext:
         self.model_name = group_name
         self.collection = bpy.data.collections.new(group_name)
         self.root_collections = build_root_collections(group_name, self.collection)
+        self._set_amdl_path()
+
+    def _set_amdl_path(self):
+        """Locate the matching ``.amdl`` next to the ``.gmdl.gfxbin``.
+
+        Probes (in order) the model folder, the parent folder, and a sibling
+        ``common`` folder. When a folder contains more than one ``.amdl``,
+        disambiguates by matching against ``model_name`` and its underscore
+        prefix. Sets ``self.amdl_path`` to ``None`` when nothing is found so
+        callers can surface a friendly error.
+        """
+        folder = os.path.dirname(self.gfxbin_path)
+        self.amdl_path = self._find_amdl_in_folder(folder)
+        if self.amdl_path is None:
+            up_folder = os.path.split(folder)[0]
+            self.amdl_path = self._find_amdl_in_folder(up_folder)
+            if self.amdl_path is None:
+                common = up_folder + "\\common"
+                if os.path.exists(common):
+                    self.amdl_path = self._find_amdl_in_folder(common)
+
+    def _find_amdl_in_folder(self, folder: str) -> str | None:
+        if not os.path.isdir(folder):
+            return None
+
+        result = None
+        file_count = 0
+        for file in os.listdir(folder):
+            if file.endswith(".amdl"):
+                file_count += 1
+                result = folder + "\\" + file
+
+        if file_count < 2:
+            return result
+
+        # Multiple amdls in this folder — disambiguate by model name and its
+        # underscore prefix (e.g. ``nh00_010`` then ``nh00``).
+        names = [self.model_name]
+        underscore = self.model_name.find("_")
+        if underscore > 0:
+            names.append(self.model_name[:underscore])
+
+        for file in os.listdir(folder):
+            if file.endswith(".amdl"):
+                for name in names:
+                    if name in file:
+                        return folder + "\\" + file
+
+        return None
 
     def set_base_directory(self, header: GfxbinHeader):
         # Get the URI of the first gpubin
@@ -169,6 +212,32 @@ class ImportContext:
                         paths_checked.append(udim)
                         if os.path.exists(udim):
                             return udim
+
+        # Fallback: the asset tree didn't yield a match. Probe well-known
+        # texture sub-folders directly next to the ``.gmdl.gfxbin`` so users
+        # can drop loose textures alongside a model and have them picked up.
+        directory = os.path.dirname(self.gfxbin_path)
+        slash = uri.rfind("/")
+        dot = uri.rfind(".")
+        if slash != -1 and dot > slash:
+            file_name = uri[slash + 1 : dot]
+            local_paths = [
+                f"{directory}\\highimages\\{file_name}_$h",
+                f"{directory}\\sourceimages\\{file_name}_$h",
+                f"{directory}\\sourceimages\\{file_name}_$m1",
+                f"{directory}\\sourceimages\\{file_name}",
+            ]
+            for base in local_paths:
+                for ext in extensions:
+                    with_extension = base + "." + ext
+                    paths_checked.append(with_extension)
+                    if os.path.exists(with_extension):
+                        return with_extension
+                    name = base.split("\\")[-1]
+                    udim = f"{base}\\{name}.1001.{ext}"
+                    paths_checked.append(udim)
+                    if os.path.exists(udim):
+                        return udim
 
         print("")
         print(f"[WARNING] Could not find texture for {uri} - checked:")

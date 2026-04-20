@@ -8,7 +8,7 @@ from ..entities import ArmatureData, BoneData
 
 
 def import_armature_data(context):
-    if os.path.exists(context.amdl_path):
+    if context.amdl_path and os.path.exists(context.amdl_path):
         amdl_file = open(context.amdl_path, "rb")
         armature_data = _read_armature_data(amdl_file)
         amdl_file.close()

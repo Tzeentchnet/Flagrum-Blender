@@ -141,6 +141,10 @@ def generate_material(context: ImportContext, mesh_data: MeshData) -> Material:
         elif "EMISSIVECOLOR0" in texture_slot or "EMISSIVE0" in texture_slot:
             if not texture_metadata.Path.upper().endswith("WHITE.TGA"):
                 material.node_tree.links.new(principled_input(bsdf, "emission"), texture.outputs["Color"])
+                # Blender 4.x+ defaults Emission Strength to 0, which hides the
+                # texture entirely. Bump it to 1.0 so the emission is visible
+                # without manual intervention.
+                principled_input(bsdf, "emission_strength").default_value = 1.0
         elif "TRANSPARENCY0" in texture_slot or "OPACITYMASK0" in texture_slot:
             texture.image.colorspace_settings.name = "Non-Color"
             material.node_tree.links.new(bsdf.inputs["Alpha"], texture.outputs["Color"])

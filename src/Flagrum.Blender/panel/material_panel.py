@@ -15,7 +15,10 @@ class TextureSlotOperator(Operator, ImportHelper):
     bl_label = "Open"
     filename_ext = ".btex"
 
-    filter_glob: StringProperty(default="*.tif;*.tiff;*.png;*.gif;*.bmp;*.jpg;*.btex", options={"HIDDEN"})
+    filter_glob: StringProperty(
+        default="*.tif;*.tiff;*.png;*.gif;*.bmp;*.jpg;*.tga;*.dds;*.btex",
+        options={"HIDDEN"},
+    )
 
     property: StringProperty()
 

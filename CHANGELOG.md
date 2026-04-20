@@ -8,6 +8,30 @@ This fork diverges from upstream `Kizari/Flagrum` starting at `2.0.0`. The refer
 
 _No changes yet._
 
+## [2.0.2] - 2026-04-19 — Cherry-picked fixes from CybersoulXIII fork
+
+Reviewed [CybersoulXIII/Flagrum-Blender](https://github.com/CybersoulXIII/Flagrum-Blender) (which forked upstream `Kizari/Flagrum-Blender` and added Blender 5.0+ support on top of unmodified `1.3.0`). The bulk of that fork — Principled BSDF socket renames, `ShaderNodeSeparate/CombineColor`, `interface.new_socket`, the `use_auto_smooth` guard — was already covered by our own Phase 2 surgery and the `utilities/blender_compat.py` shim. Six **orthogonal** behaviour improvements remained worth borrowing; this release ports those.
+
+Credit: CybersoulXIII for the upstream patches.
+
+### Fixed
+
+- **Emissive textures now glow on import.** Blender 4.x+ defaults the Principled BSDF `Emission Strength` socket to `0`, which silently swallows any emissive texture link. After wiring `Emission Color` we now also set `Emission Strength = 1.0` so the surface renders as authored. Affects both [import_export/generate_material.py](src/Flagrum.Blender/import_export/generate_material.py) (env path) and [import_export/gmtlimporter.py](src/Flagrum.Blender/import_export/gmtlimporter.py) (model path).
+- **Pre-2022 GMDL skin weights no longer collapse onto a single bone.** Legacy assets sometimes ship with multiple bones whose `unique_index` is the sentinel `65535`; indexing the bone table by `unique_index` then overwrote every collided entry. [import_export/gmdlimporter.py](src/Flagrum.Blender/import_export/gmdlimporter.py) now detects that case and falls back to sequential numbering, preserving the original weight mapping.
+- **`L_UpperArm` is no longer eligible for cleanup-pass deletion.** Added to the canonical keep-list in [panel/cleanup_panel.py](src/Flagrum.Blender/panel/cleanup_panel.py).
+
+### Added
+
+- **Smarter AMDL discovery.** [import_export/import_context.py](src/Flagrum.Blender/import_export/import_context.py) now probes the model folder, the parent folder, and a sibling `common/` folder when locating the matching `.amdl`. When a folder contains more than one `.amdl`, the model name (and its underscore prefix — e.g. `nh00_010` → `nh00`) is used to disambiguate. When no match is found, `amdl_path` is left as `None` and the import operator surfaces a friendly error instead of crashing.
+- **Friendly error when a rigged model is missing its AMDL.** [import_export/menu.py](src/Flagrum.Blender/import_export/menu.py) now imports the gfxbin and bone table first, then aborts with `self.report({'ERROR'}, ...)` if bones exist but no AMDL was resolved. Mesh-only props (empty bone tables) continue to import fine without an AMDL.
+- **Texture path fallback near the model.** When the canonical asset-tree lookup fails, [import_export/import_context.py](src/Flagrum.Blender/import_export/import_context.py) now also probes `<model_dir>/highimages/<name>_$h.<ext>`, `sourceimages/<name>_$h.<ext>`, `_$m1.<ext>`, plain `<name>.<ext>` and the `.1001.<ext>` UDIM variants. Helps when textures are dropped beside a model rather than in the canonical folder layout.
+- **Texture file picker now accepts `.tga` and `.dds`.** Updated `filter_glob` in [panel/material_panel.py](src/Flagrum.Blender/panel/material_panel.py).
+
+### Changed
+
+- **`GmdlImporter` import pipeline split into three public methods** (`import_gfxbin`, `generate_bone_table`, `import_meshes`) so callers can interleave validation. The legacy `run()` wrapper is kept as a convenience that drives all three in order. `set_base_directory(...)` is now folded into `import_gfxbin()` since it's a pure post-parse step.
+- **`read_armature_data` is now `None`-safe.** Hardened against the new `amdl_path = None` sentinel even though the menu operator already guards against it.
+
 ## [2.0.1] - 2026-04-19 — Post-release docs & formatting
 
 ### Documentation

@@ -47,12 +47,28 @@ class ImportOperator(Operator, ImportHelper):
     def execute(self, context):
         import_context = ImportContext(self.filepath, self.import_lods, self.import_vems)
 
-        armature_data = import_armature_data(import_context)
-        if armature_data is not None:
-            generate_armature(import_context, armature_data)
-
         importer = GmdlImporter(import_context)
-        importer.run()
+        importer.import_gfxbin()
+        importer.generate_bone_table()
+
+        # If the model is rigged we need a matching ``.amdl``. Surface a
+        # friendly error instead of letting the downstream code stack-trace
+        # when the file isn't sitting in any of the probed folders.
+        if len(importer.bone_table) > 0 and import_context.amdl_path is None:
+            self.report(
+                {"ERROR"},
+                "Unable to import due to missing armature (amdl) file. Please ensure you have "
+                "the correct amdl file exported. If you have multiple amdl files in the same "
+                "folder, make sure that the name matches the model you are trying to import.",
+            )
+            return {"FINISHED"}
+
+        if len(importer.bone_table) > 0:
+            armature_data = import_armature_data(import_context)
+            if armature_data is not None:
+                generate_armature(import_context, armature_data)
+
+        importer.import_meshes()
         return {"FINISHED"}
 
 

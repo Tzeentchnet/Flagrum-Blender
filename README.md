@@ -108,4 +108,5 @@ Because the project is GPLv3-or-later, any redistribution — including derivati
 ## Credits
 
 - Original Flagrum project: **Kizari** and contributors — <https://github.com/Kizari/Flagrum>
+- **CybersoulXIII** — <https://github.com/CybersoulXIII/Flagrum-Blender>. Several small import-path and material fixes in the `2.0.2` release were adapted from that fork; see the [CHANGELOG](CHANGELOG.md#202---2026-04-19--cherry-picked-fixes-from-cybersoulxiii-fork) for the full list.
 - This Blender 5+ fork is maintained separately from the desktop application.

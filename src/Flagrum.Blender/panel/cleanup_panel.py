@@ -240,6 +240,7 @@ class DeleteUnusedBonesOperator(Operator):
                 "R_HipSub",
                 "R_HipSubEnd",
                 "c_BeltKdi",
+                "L_UpperArm",
             ]
 
         for mesh in meshes:

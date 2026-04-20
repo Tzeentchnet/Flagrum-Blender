@@ -61,22 +61,29 @@ class GmdlImporter:
         }
 
     def run(self):
+        """Convenience: run the full import pipeline in one call.
+
+        Equivalent to ``import_gfxbin()`` → ``generate_bone_table()`` →
+        ``import_meshes()``. Callers that need to insert validation between
+        steps (e.g. checking ``context.amdl_path`` once the bone table is
+        known) should invoke the three methods directly instead.
+        """
         timer = Timer()
         self.timer = Timer()
-        self._import_gfxbin()
+        self.import_gfxbin()
         self.timer.print("Importing gfxbin")
-        self.context.set_base_directory(self.game_model.header)
-        self._generate_bone_table()
+        self.generate_bone_table()
         self.timer.print("Generating bone table")
-        self._import_meshes()
+        self.import_meshes()
         timer.print("Overall import")
 
-    def _import_gfxbin(self):
+    def import_gfxbin(self):
         with open(self.context.gfxbin_path, mode="rb") as file:
             reader = MessagePackReader(file.read())
         self.game_model = Gmdl(reader)
+        self.context.set_base_directory(self.game_model.header)
 
-    def _generate_bone_table(self):
+    def generate_bone_table(self):
         self.bone_table = {}
         counter = 0
         if self.game_model.header.version >= 20220707:
@@ -84,10 +91,30 @@ class GmdlImporter:
                 self.bone_table[counter] = bone.name
                 counter += 1
         else:
+            # Legacy assets sometimes ship with multiple bones whose
+            # ``unique_index`` is the sentinel 65535. Indexing the bone table
+            # by ``unique_index`` then collapses every collided entry onto a
+            # single key, destroying skin weights. Detect that case and fall
+            # back to sequential numbering — the first sentinel keeps key 0
+            # in the single-collision case to preserve the original mapping.
+            sentinel_count = 0
             for bone in self.game_model.bones:
-                self.bone_table[bone.unique_index] = bone.name
+                if bone.unique_index == 65535:
+                    sentinel_count += 1
+                    if sentinel_count > 1:
+                        break
+            if sentinel_count > 1:
+                for bone in self.game_model.bones:
+                    self.bone_table[counter] = bone.name
+                    counter += 1
+            else:
+                for bone in self.game_model.bones:
+                    if bone.unique_index == 65535:
+                        self.bone_table[0] = bone.name
+                    else:
+                        self.bone_table[bone.unique_index] = bone.name
 
-    def _import_meshes(self):
+    def import_meshes(self):
         rc = self.context.root_collections
 
         # Pre-create the LOD sub-collections in the order they appear in the
