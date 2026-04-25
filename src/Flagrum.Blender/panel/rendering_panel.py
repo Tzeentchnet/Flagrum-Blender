@@ -47,12 +47,19 @@ class SetEmissionOperator(Operator):
     bl_description = "Sets the emission strength of all materials in the scene"
 
     def execute(self, context):
+        skipped_materials = 0
         for material in bpy.data.materials:
-            if material.node_tree is not None:
-                bsdf = material.node_tree.nodes["Principled BSDF"]
-                principled_input(
-                    bsdf, "emission_strength"
-                ).default_value = context.window_manager.flagrum_globals.emission_strength
+            if material.node_tree is None or "Principled BSDF" not in material.node_tree.nodes:
+                skipped_materials += 1
+                continue
+
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            principled_input(
+                bsdf, "emission_strength"
+            ).default_value = context.window_manager.flagrum_globals.emission_strength
+
+        if skipped_materials > 0:
+            self.report({"WARNING"}, f"Skipped {skipped_materials} material(s) without a Principled BSDF node")
 
         return {"FINISHED"}
 

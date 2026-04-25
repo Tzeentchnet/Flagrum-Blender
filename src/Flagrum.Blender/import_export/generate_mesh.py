@@ -140,9 +140,11 @@ def generate_mesh(
     polygon_count = len(mesh.polygons)
     if len(parts) > 0:
         for parts_group in mesh_data.MeshParts:
-            parts_layer: IntAttribute = mesh.attributes.new(
-                name=parts[str(parts_group.PartsId)], type="BOOLEAN", domain="FACE"
-            )
+            part_name = parts.get(str(parts_group.PartsId), parts.get(parts_group.PartsId))
+            if part_name is None:
+                part_name = f"part_{parts_group.PartsId}"
+                print(f"[WARNING] Missing part name for ID {parts_group.PartsId}; using {part_name}")
+            parts_layer: IntAttribute = mesh.attributes.new(name=part_name, type="BOOLEAN", domain="FACE")
 
             start_index = int(parts_group.StartIndex / 3)
             index_count = int(parts_group.IndexCount / 3)

@@ -1,6 +1,6 @@
 ﻿# Flagrum.Blender (add-on source)
 
-This directory is the **active source tree** for the Flagrum-Blender add-on (`flagrum`, version `2.0.0`). It is shipped as a [Blender Extension](https://docs.blender.org/manual/en/latest/extensions/index.html) and targets **Blender 5.0+**.
+This directory is the **active source tree** for the Flagrum-Blender add-on (`flagrum`, version `2.0.2`). It is shipped as a [Blender Extension](https://docs.blender.org/manual/en/latest/extensions/index.html) and targets **Blender 5.0+**.
 
 For installation, feature matrix, and usage notes, see the [top-level README](../../README.md).
 
@@ -56,18 +56,4 @@ The `[build]` table in [blender_manifest.toml](blender_manifest.toml) excludes `
 
 - **Do not edit** `modules/Flagrum/Flagrum.Blender/` — that is a frozen historical snapshot of the upstream tree.
 - Multi-step changes are tracked in [docs/PLAN.md](../../docs/PLAN.md). Update phase status when starting or finishing work.
-- The repo memory (`/memories/repo/flagrum_blender_architecture.md`) holds the up-to-date map of the addon; keep it in sync if structural changes land.
-# Flagrum.Blender
-
-This project is the Blender add-on used for creating FMD files for Flagrum's Mod Library functionality.
-
-### C# Console Application
-
-This component of the project is a simple console application that is called from the Blender Python scripts to leverage
-parts of the core Flagrum library. This is done to prevent writing and maintaining a second copy of the same code in a
-different language so we can focus our efforts on bigger priorities.
-
-### Python Add-on
-
-The rest of the project are the Python scripts that make up the Blender add-on. These scripts are copied to the publish
-directory by MSBuild to ensure the entire setup can be published with a single click.
+- The repo memory (`/memories/repo/flagrum_blender_assessment_2026-04-25.md`) holds the latest accuracy/usability assessment; keep repo memory in sync if structural changes land.

@@ -170,6 +170,9 @@ def _pack_normals_and_tangents(mesh: Object):
 def _pack_bone_table():
     bone_table = {}
     reverse_bone_table = {}
+    if len(bpy.data.armatures) == 0:
+        return bone_table, reverse_bone_table
+
     armature = bpy.data.armatures[0]
 
     for i in range(len(armature.bones)):

@@ -16,7 +16,7 @@ This repository is a **Blender 5+ fork** of [Kizari/Flagrum](https://github.com/
 
 ### From a release zip
 
-1. Download `flagrum-2.0.0.zip` from the [Releases page](https://github.com/Tzeentchnet/Flagrum-Blender/releases/latest).
+1. Download `flagrum-2.0.2.zip` from the [Releases page](https://github.com/Tzeentchnet/Flagrum-Blender/releases/latest).
 2. In Blender, open `Edit > Preferences > Get Extensions`.
 3. Click the dropdown in the top-right → `Install from Disk...` and choose the downloaded zip. Alternatively, drag the zip directly onto the Blender window — the Extensions UI accepts drops.
 
@@ -31,7 +31,7 @@ cd Flagrum-Blender
 blender --command extension build --source-dir src/Flagrum.Blender --output-dir dist
 ```
 
-The resulting `dist/flagrum-2.0.0.zip` can be installed via `Get Extensions > Install from Disk...`.
+The resulting `dist/flagrum-2.0.2.zip` can be installed via `Get Extensions > Install from Disk...`.
 
 ## Features
 
@@ -80,7 +80,7 @@ The upstream [Flagrum wiki](https://github.com/Kizari/Flagrum/wiki) covers the a
 src/Flagrum.Blender/      # the active add-on source — this is what ships
 modules/Flagrum/          # frozen upstream snapshot, kept for historical comparison
 docs/PLAN.md              # modernization plan and phase tracker
-CHANGELOG.md              # fork-specific changelog (starts at 2.0.0)
+docs/CHANGELOG.md         # fork-specific changelog (starts at 2.0.0)
 pyproject.toml            # ruff configuration for the addon source
 ```
 
@@ -108,5 +108,5 @@ Because the project is GPLv3-or-later, any redistribution — including derivati
 ## Credits
 
 - Original Flagrum project: **Kizari** and contributors — <https://github.com/Kizari/Flagrum>
-- **CybersoulXIII** — <https://github.com/CybersoulXIII/Flagrum-Blender>. Several small import-path and material fixes in the `2.0.2` release were adapted from that fork; see the [CHANGELOG](CHANGELOG.md#202---2026-04-19--cherry-picked-fixes-from-cybersoulxiii-fork) for the full list.
+- **CybersoulXIII** — <https://github.com/CybersoulXIII/Flagrum-Blender>. Several small import-path and material fixes in the `2.0.2` release were adapted from that fork; see the [CHANGELOG](docs/CHANGELOG.md#202---2026-04-19--cherry-picked-fixes-from-cybersoulxiii-fork) for the full list.
 - This Blender 5+ fork is maintained separately from the desktop application.

@@ -1,5 +1,5 @@
 import math
-from os.path import exists
+from os.path import exists, join
 
 import bpy
 import numpy
@@ -49,6 +49,10 @@ texture_array_map = [
     (22, 0.51613, 0.02419),
     (25, 0.16129, 0.02419),
 ]
+
+
+def _terrain_texture_path(context: TerrainImportContext, tile_name: str, file_name: str) -> str:
+    return join(context.directory, f"{context.filename_without_extension}_terrain_textures", tile_name, file_name)
 
 
 def generate_terrain(context: TerrainImportContext, data: list[TerrainMetadata]):
@@ -158,14 +162,7 @@ def generate_terrain(context: TerrainImportContext, data: list[TerrainMetadata])
         principled_input(bsdf, "roughness").default_value = 0.9  # Roughness
 
         if context.use_high_materials:
-            mask_path = (
-                context.directory
-                + "\\"
-                + context.filename_without_extension
-                + "_terrain_textures\\"
-                + tile.Name
-                + "\\merged_mask_map.tga"
-            )
+            mask_path = _terrain_texture_path(context, tile.Name, "merged_mask_map.tga")
             if exists(mask_path):
                 material.cycles.displacement_method = "DISPLACEMENT"
                 _setup_texture_splatting(context, material, bsdf, tile.Name)
@@ -184,14 +181,7 @@ def generate_terrain(context: TerrainImportContext, data: list[TerrainMetadata])
 
 def _setup_basic_shader(context: TerrainImportContext, material: Material, bsdf, tile_name: str):
     texture = material.node_tree.nodes.new("ShaderNodeTexImage")
-    diffuse_path = (
-        context.directory
-        + "\\"
-        + context.filename_without_extension
-        + "_terrain_textures\\"
-        + tile_name
-        + "\\diffuse.tga"
-    )
+    diffuse_path = _terrain_texture_path(context, tile_name, "diffuse.tga")
     if exists(diffuse_path):
         texture.image = bpy.data.images.load(diffuse_path, check_existing=True)
     material.node_tree.links.new(bsdf.inputs["Base Color"], texture.outputs["Color"])
@@ -200,14 +190,7 @@ def _setup_basic_shader(context: TerrainImportContext, material: Material, bsdf,
 
 def _setup_normal_map(context: TerrainImportContext, material: Material, bsdf, tile_name: str):
     texture = material.node_tree.nodes.new("ShaderNodeTexImage")
-    normal_path = (
-        context.directory
-        + "\\"
-        + context.filename_without_extension
-        + "_terrain_textures\\"
-        + tile_name
-        + "\\normal.tga"
-    )
+    normal_path = _terrain_texture_path(context, tile_name, "normal.tga")
     if exists(normal_path):
         texture.image = bpy.data.images.load(normal_path, check_existing=True)
         texture.image.colorspace_settings.name = "Non-Color"
@@ -243,21 +226,16 @@ def _setup_texture_splatting(context: TerrainImportContext, material: Material, 
     material.node_tree.links.new(separate_rgb.outputs["Green"], multiply.inputs["Factor"])
 
     splat_map = material.node_tree.nodes.new("ShaderNodeTexImage")
-    splat_path = (
-        context.directory
-        + "\\"
-        + context.filename_without_extension
-        + "_terrain_textures\\"
-        + tile_name
-        + "\\slope_map.tga"
-    )
+    splat_path = _terrain_texture_path(context, tile_name, "slope_map.tga")
     if exists(splat_path):
         splat_map.image = bpy.data.images.load(splat_path, check_existing=True)
         splat_map.image.colorspace_settings.name = "Non-Color"
     material.node_tree.links.new(splat_map.outputs["Color"], separate_rgb.inputs["Color"])
 
     cliff_texture = material.node_tree.nodes.new("ShaderNodeTexImage")
-    cliff_texture.image = bpy.data.images.load(context.directory + "\\common\\diffuse\\0.tga", check_existing=True)
+    cliff_texture.image = bpy.data.images.load(
+        join(context.directory, "common", "diffuse", "0.tga"), check_existing=True
+    )
     material.node_tree.links.new(cliff_texture.outputs["Color"], mix.inputs["B"])
 
     mix_arrays = new_mix_rgba(material.node_tree)
@@ -283,14 +261,7 @@ def _setup_texture_splatting(context: TerrainImportContext, material: Material, 
     material.node_tree.links.new(separate_masks.outputs["Blue"], array_blue.inputs["Texture ID"])
 
     mask_map = material.node_tree.nodes.new("ShaderNodeTexImage")
-    mask_path = (
-        context.directory
-        + "\\"
-        + context.filename_without_extension
-        + "_terrain_textures\\"
-        + tile_name
-        + "\\merged_mask_map.tga"
-    )
+    mask_path = _terrain_texture_path(context, tile_name, "merged_mask_map.tga")
     if exists(mask_path):
         mask_map.image = bpy.data.images.load(mask_path, check_existing=True)
         mask_map.image.colorspace_settings.name = "Non-Color"
@@ -418,7 +389,7 @@ def _setup_texture_array_group(context: TerrainImportContext, array_type: str) -
     if group:
         return group
 
-    directory = context.directory + "\\common\\" + array_type.lower()
+    directory = join(context.directory, "common", array_type.lower())
     group = bpy.data.node_groups.new("Terrain " + array_type + " Array", "ShaderNodeTree")
 
     group_inputs = group.nodes.new("NodeGroupInput")
@@ -429,7 +400,7 @@ def _setup_texture_array_group(context: TerrainImportContext, array_type: str) -
     node_group_add_output(group, "Color", "NodeSocketColor")
 
     base_texture = group.nodes.new("ShaderNodeTexImage")
-    base_texture.image = bpy.data.images.load(directory + "\\11.tga", check_existing=True)
+    base_texture.image = bpy.data.images.load(join(directory, "11.tga"), check_existing=True)
     group.links.new(group_inputs.outputs["Vector"], base_texture.inputs["Vector"])
 
     prev_lighten = None
@@ -439,7 +410,7 @@ def _setup_texture_array_group(context: TerrainImportContext, array_type: str) -
         if i not in indices:
             continue
         texture = group.nodes.new("ShaderNodeTexImage")
-        texture.image = bpy.data.images.load(directory + "\\" + str(i) + ".tga", check_existing=True)
+        texture.image = bpy.data.images.load(join(directory, f"{i}.tga"), check_existing=True)
         group.links.new(group_inputs.outputs["Vector"], texture.inputs["Vector"])
 
         if i == 25:

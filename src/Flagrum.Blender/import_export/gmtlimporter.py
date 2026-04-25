@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import bpy
 from bpy.types import Material, NodeTree
@@ -97,7 +98,7 @@ class GmtlImporter:
 
             texture = material.node_tree.nodes.new("ShaderNodeTexImage")
             texture.image = bpy.data.images.load(texture_path, check_existing=True)
-            if texture_path.split("\\")[-1].split(".")[-2] == "1001":
+            if Path(texture_path).stem.split(".")[-1] == "1001":
                 texture.image.source = "TILED"
 
             if needs_scaling:

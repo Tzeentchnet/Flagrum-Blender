@@ -1,11 +1,16 @@
-import bpy
-import bpy.path
 from bpy.props import StringProperty
 from bpy.types import Operator, Panel
 from bpy_extras.io_utils import ImportHelper
 
 from ..import_export.interop import Interop
 from .material_data import MaterialSettings, material_properties, material_weight_limit
+
+
+def _get_active_material_data(material: MaterialSettings):
+    for property_definition in material.property_collection:
+        if property_definition.material_id == material.preset:
+            return property_definition
+    return None
 
 
 class TextureSlotOperator(Operator, ImportHelper):
@@ -93,10 +98,10 @@ class MaterialResetOperator(Operator):
 
     def execute(self, context):
         material = context.view_layer.objects.active.flagrum_material
-        active_material_data = None
-        for property_definition in material.property_collection:
-            if property_definition.material_id == material.preset:
-                active_material_data = property_definition
+        active_material_data = _get_active_material_data(material)
+        if active_material_data is None or material.preset not in material_properties:
+            self.report({"WARNING"}, "No Flagrum material preset data is available to reset")
+            return {"CANCELLED"}
 
         defaults = material_properties[material.preset]
         for default in defaults:
@@ -114,10 +119,10 @@ class MaterialCopyOperator(Operator):
     def execute(self, context):
         clipboard = context.window_manager.flagrum_material_clipboard
         material: MaterialSettings = context.view_layer.objects.active.flagrum_material
-        active_material_data = None
-        for property_definition in material.property_collection:
-            if property_definition.material_id == material.preset:
-                active_material_data = property_definition
+        active_material_data = _get_active_material_data(material)
+        if active_material_data is None:
+            self.report({"WARNING"}, "No Flagrum material preset data is available to copy")
+            return {"CANCELLED"}
 
         for attribute in dir(active_material_data):
             if not attribute.startswith("__") and attribute != "property_collection" and attribute != "rna_type":
@@ -134,21 +139,27 @@ class MaterialPasteOperator(Operator):
 
     @classmethod
     def poll(cls, context):
+        active_object = context.view_layer.objects.active
+        if active_object is None or active_object.type != "MESH":
+            return False
+
         material_id = context.window_manager.flagrum_material_clipboard.material_id
-        material: MaterialSettings = context.view_layer.objects.active.flagrum_material
-        active_material_data = None
-        for property_definition in material.property_collection:
-            if property_definition.material_id == material.preset:
-                active_material_data = property_definition
-        return material_id is not None and material_id != "" and active_material_data.material_id == material_id
+        material: MaterialSettings = active_object.flagrum_material
+        active_material_data = _get_active_material_data(material)
+        return (
+            material_id is not None
+            and material_id != ""
+            and active_material_data is not None
+            and active_material_data.material_id == material_id
+        )
 
     def execute(self, context):
         clipboard = context.window_manager.flagrum_material_clipboard
         material: MaterialSettings = context.view_layer.objects.active.flagrum_material
-        active_material_data = None
-        for property_definition in material.property_collection:
-            if property_definition.material_id == material.preset:
-                active_material_data = property_definition
+        active_material_data = _get_active_material_data(material)
+        if active_material_data is None:
+            self.report({"WARNING"}, "No matching Flagrum material preset data is available to paste")
+            return {"CANCELLED"}
 
         for attribute in dir(clipboard):
             if not attribute.startswith("__") and attribute != "property_collection" and attribute != "rna_type":
@@ -166,7 +177,8 @@ class MaterialEditorPanel(Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.context.view_layer.objects.active.type == "MESH"
+        active_object = context.view_layer.objects.active
+        return active_object is not None and active_object.type == "MESH"
 
     def draw(self, context):
         layout = self.layout
@@ -174,10 +186,7 @@ class MaterialEditorPanel(Panel):
         active_object = context.view_layer.objects.active
         material = active_object.flagrum_material
 
-        active_material_data = None
-        for property_definition in material.property_collection:
-            if property_definition.material_id == material.preset:
-                active_material_data = property_definition
+        active_material_data = _get_active_material_data(material)
 
         layout.prop(data=material, property="preset")
 

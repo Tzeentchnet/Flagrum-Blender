@@ -8,6 +8,10 @@ from ..utilities.import_collections import RootCollections, build_root_collectio
 from .gfxbin.gfxbinheader import GfxbinHeader
 
 
+def _path_name(path: str) -> str:
+    return os.path.basename(path.replace("\\", os.sep).replace("/", os.sep))
+
+
 @dataclass(init=False)
 class ImportContext:
     gfxbin_path: str
@@ -23,7 +27,7 @@ class ImportContext:
     base_directory: str
     base_uri: str
 
-    def __init__(self, gfxbin_file_path, import_lods, import_vems):
+    def __init__(self, gfxbin_file_path, import_lods=False, import_vems=False):
         self.gfxbin_path = gfxbin_file_path
         self.import_lods = import_lods
         self.import_vems = import_vems
@@ -31,7 +35,7 @@ class ImportContext:
         self.materials = {}
         self.texture_slots = {}
 
-        file_name = gfxbin_file_path.split("\\")[-1]
+        file_name = _path_name(gfxbin_file_path)
         group_name = ""
         for string in file_name.split("."):
             if string != "gmdl" and string != "gfxbin":
@@ -59,7 +63,7 @@ class ImportContext:
             up_folder = os.path.split(folder)[0]
             self.amdl_path = self._find_amdl_in_folder(up_folder)
             if self.amdl_path is None:
-                common = up_folder + "\\common"
+                common = os.path.join(up_folder, "common")
                 if os.path.exists(common):
                     self.amdl_path = self._find_amdl_in_folder(common)
 
@@ -72,7 +76,7 @@ class ImportContext:
         for file in os.listdir(folder):
             if file.endswith(".amdl"):
                 file_count += 1
-                result = folder + "\\" + file
+                result = os.path.join(folder, file)
 
         if file_count < 2:
             return result
@@ -88,7 +92,7 @@ class ImportContext:
             if file.endswith(".amdl"):
                 for name in names:
                     if name in file:
-                        return folder + "\\" + file
+                        return os.path.join(folder, file)
 
         return None
 
@@ -101,13 +105,7 @@ class ImportContext:
                 break
 
         self.base_uri = gpubin_uri[: gpubin_uri.rfind("/")]
-        tokens = self.gfxbin_path.split("\\")[:-1]
-
-        base_directory = ""
-        for i in range(len(tokens)):
-            base_directory += tokens[i] + "\\"
-
-        self.base_directory = base_directory[:-1]
+        self.base_directory = os.path.dirname(self.gfxbin_path)
 
     def get_absolute_path_from_uri(self, uri: str):
         if (
@@ -161,14 +159,9 @@ class ImportContext:
             return None
 
         # Calculate the absolute path of the highest common folder
-        base_path = ""
-        base_path_tokens = self.base_directory.split("\\")
-        if counter > 0:
-            base_path_tokens = base_path_tokens[:-counter]
-        for i in range(len(base_path_tokens)):
-            base_path += base_path_tokens[i] + "\\"
-
-        base_path = base_path[:-1]
+        base_path = self.base_directory
+        for _ in range(counter):
+            base_path = os.path.dirname(base_path)
 
         # Assemble the common URI start
         target = ""
@@ -182,8 +175,8 @@ class ImportContext:
         target = target[:-1]
 
         # Calculate the final absolute path
-        remaining_path = uri.replace(target, "").replace("://", "/").replace("/", "\\")
-        return base_path + remaining_path.replace(".gmtl", ".gmtl.gfxbin")
+        remaining_path = uri.replace(target, "").replace("://", "/").lstrip("/")
+        return os.path.join(base_path, remaining_path.replace(".gmtl", ".gmtl.gfxbin"))
 
     def _resolve_texture_path(self, uri: str):
         extensions = ["dds", "tga", "png"]
@@ -207,8 +200,8 @@ class ImportContext:
                     if os.path.exists(with_extension):
                         return with_extension
                     else:
-                        name = without_extension.split("\\")[-1]
-                        udim = f"{without_extension}\\{name}.1001.{extensions[j]}"
+                        name = _path_name(without_extension)
+                        udim = os.path.join(without_extension, f"{name}.1001.{extensions[j]}")
                         paths_checked.append(udim)
                         if os.path.exists(udim):
                             return udim
@@ -222,10 +215,10 @@ class ImportContext:
         if slash != -1 and dot > slash:
             file_name = uri[slash + 1 : dot]
             local_paths = [
-                f"{directory}\\highimages\\{file_name}_$h",
-                f"{directory}\\sourceimages\\{file_name}_$h",
-                f"{directory}\\sourceimages\\{file_name}_$m1",
-                f"{directory}\\sourceimages\\{file_name}",
+                os.path.join(directory, "highimages", f"{file_name}_$h"),
+                os.path.join(directory, "sourceimages", f"{file_name}_$h"),
+                os.path.join(directory, "sourceimages", f"{file_name}_$m1"),
+                os.path.join(directory, "sourceimages", file_name),
             ]
             for base in local_paths:
                 for ext in extensions:
@@ -233,8 +226,8 @@ class ImportContext:
                     paths_checked.append(with_extension)
                     if os.path.exists(with_extension):
                         return with_extension
-                    name = base.split("\\")[-1]
-                    udim = f"{base}\\{name}.1001.{ext}"
+                    name = _path_name(base)
+                    udim = os.path.join(base, f"{name}.1001.{ext}")
                     paths_checked.append(udim)
                     if os.path.exists(udim):
                         return udim

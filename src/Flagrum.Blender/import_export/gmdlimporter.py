@@ -184,9 +184,15 @@ class GmdlImporter:
         else:
             data_type = "<I"
 
+        if mesh_data.face_index_count % 3 != 0:
+            raise ValueError(
+                f"Unable to import {mesh_data.name}: face index count "
+                f"{mesh_data.face_index_count} is not divisible by 3"
+            )
+
         face_indices = np.frombuffer(
             buffer, dtype=data_type, offset=mesh_data.face_index_offset, count=mesh_data.face_index_count
-        ).reshape((int(mesh_data.face_index_count / 3), 3))
+        ).reshape((mesh_data.face_index_count // 3, 3))
 
         self.timer.print("Reading face indices")
 
@@ -323,7 +329,11 @@ class GmdlImporter:
 
         polygon_count = len(mesh.polygons)
         for parts_group in mesh_data.parts:
-            parts_layer = mesh.attributes.new(name=model_parts[parts_group.parts_id], type="BOOLEAN", domain="FACE")
+            parts_name = model_parts.get(parts_group.parts_id)
+            if parts_name is None:
+                parts_name = f"part_{parts_group.parts_id}"
+                print(f"[WARNING] Missing part name for ID {parts_group.parts_id}; using {parts_name}")
+            parts_layer = mesh.attributes.new(name=parts_name, type="BOOLEAN", domain="FACE")
 
             start_index = int(parts_group.start_index / 3)
             index_count = int(parts_group.index_count / 3)
