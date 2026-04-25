@@ -1,6 +1,6 @@
 ﻿# Flagrum.Blender (add-on source)
 
-This directory is the **active source tree** for the Flagrum-Blender add-on (`flagrum`, version `2.0.2`). It is shipped as a [Blender Extension](https://docs.blender.org/manual/en/latest/extensions/index.html) and targets **Blender 5.0+**.
+This directory is the **active source tree** for the Flagrum-Blender add-on (`flagrum`). It is shipped as a [Blender Extension](https://docs.blender.org/manual/en/latest/extensions/index.html) and targets **Blender 5.0+**.
 
 For installation, feature matrix, and usage notes, see the [top-level README](../../README.md).
 

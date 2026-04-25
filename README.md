@@ -16,7 +16,7 @@ This repository is a **Blender 5+ fork** of [Kizari/Flagrum](https://github.com/
 
 ### From a release zip
 
-1. Download `flagrum-2.0.2.zip` from the [Releases page](https://github.com/Tzeentchnet/Flagrum-Blender/releases/latest).
+1. Download the latest `flagrum-*.zip` from the [Releases page](https://github.com/Tzeentchnet/Flagrum-Blender/releases/latest).
 2. In Blender, open `Edit > Preferences > Get Extensions`.
 3. Click the dropdown in the top-right → `Install from Disk...` and choose the downloaded zip. Alternatively, drag the zip directly onto the Blender window — the Extensions UI accepts drops.
 
@@ -31,7 +31,7 @@ cd Flagrum-Blender
 blender --command extension build --source-dir src/Flagrum.Blender --output-dir dist
 ```
 
-The resulting `dist/flagrum-2.0.2.zip` can be installed via `Get Extensions > Install from Disk...`.
+The resulting `dist/flagrum-*.zip` can be installed via `Get Extensions > Install from Disk...`.
 
 ## Features
 

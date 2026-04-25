@@ -8,7 +8,7 @@ This fork diverges from upstream `Kizari/Flagrum` starting at `2.0.0`. The refer
 
 ### Fixed
 
-- **Release documentation now points at the current artifact.** Updated release and source-build instructions to reference `flagrum-2.0.2.zip`, matching `blender_manifest.toml`.
+- **Release documentation is version-agnostic.** Release and source-build instructions now reference `flagrum-*.zip` so they do not go stale after every manifest version bump.
 - **Rendering emission strength no longer crashes on non-Principled materials.** The Rendering panel now skips materials without a `Principled BSDF` node and reports a warning instead of raising `KeyError`.
 - **Material copy/paste/reset now handles missing preset data.** The Material panel now guards empty or mismatched Flagrum material preset state and cancels with a user-visible warning instead of dereferencing `None`.
 - **Environment and terrain imports now close JSON files and use portable paths.** Import operators and path discovery no longer rely on Windows-only backslash splitting for model, material, texture, and terrain paths.

@@ -62,8 +62,8 @@ Execute on Blender 5.0 (and 5.1 if available) with `--factory-startup`:
 For each row capture: import time (Timer output), Blender console errors, visual diff vs. reference render.
 
 ### 5e. Packaging
-- [x] `blender_manifest.toml` is now at `version = "2.0.2"`, `blender_version_min = "5.0.0"`. Tagline + permissions strings shortened to satisfy the 64-char manifest limit; added `.idea/` to `paths_exclude_pattern`.
-- [x] Built `flagrum-2.0.0.zip` via `blender --command extension build --source-dir src/Flagrum.Blender --output-dir dist` on Blender 5.1 (2026-04-18, 65 entries, ~370 KB).
+- [x] `blender_manifest.toml` is now at `version = "2.0.3"`, `blender_version_min = "5.0.0"`. Tagline + permissions strings shortened to satisfy the 64-char manifest limit; added `.idea/` to `paths_exclude_pattern`.
+- [x] Built `flagrum-2.0.3.zip` via `blender --command extension build --source-dir src/Flagrum.Blender --output-dir dist` on Blender 5.1 (2026-04-25, 65 entries, ~370 KB).
 - [x] Verified `__pycache__`, `*.pyc`, `venv/`, `.git*`, `.idea/`, `.vscode/` correctly excluded from the produced zip.
 - [x] Smoke-installed the produced zip via Extensions UI on a clean Blender profile (2026-04-19) — installed cleanly.
 - [x] Tagged & released on GitHub: tag **`flagrum`**, commit `64fa577`, title "Flagrum Blender Addon 2.0", 3 assets attached, published 2026-04-19. <https://github.com/Tzeentchnet/Flagrum-Blender/releases/tag/flagrum>
